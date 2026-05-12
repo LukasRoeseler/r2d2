@@ -269,6 +269,34 @@ body {
   font-size: 13px; color: var(--text-secondary); font-weight: 400;
   margin-bottom: 14px; line-height: 1.5;
 }
+.author-link {
+  display: inline-flex; align-items: center; gap: 3px;
+  color: var(--text-secondary); text-decoration: none;
+  white-space: nowrap;
+}
+a.author-link:hover { color: var(--r2-blue); }
+a.author-link:hover .orcid-icon { transform: scale(1.15); }
+.orcid-icon {
+  width: 11px; height: 11px; vertical-align: -1px;
+  transition: transform 0.15s;
+}
+
+.mbadge.mbadge-link { cursor: pointer; transition: all 0.15s; text-decoration: none; }
+.mbadge.mbadge-link:hover { border-color: var(--r2-blue); background: var(--r2-blue-light); color: var(--r2-blue-deep); }
+
+/* ── SITE FOOTER ── */
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 20px 48px;
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11.5px; color: var(--text-muted);
+  max-width: 1180px; margin: 0 auto;
+}
+.site-footer a { color: var(--r2-blue); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+.site-footer .footer-sep { color: var(--border-mid); }
+.site-footer strong { color: var(--text-secondary); font-weight: 600; }
 
 /* ── ACTION BUTTONS ── */
 .pub-actions {
@@ -444,6 +472,7 @@ body {
       <div class="legend-item"><span class="legend-dot" style="background:#e67e22"></span>DataCite (citations)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span>Crossref (citations)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#3498db"></span>OJS stats CSV (views/downloads)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#1185fe"></span>Bluesky (social mentions)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#9b59b6"></span>Altmetric (badge)</div>
     </div>
   </aside>
@@ -485,6 +514,16 @@ body {
     <div id="pub-list"></div>
   </main>
 </div>
+
+<footer class="site-footer">
+  <span>Replication Research Dissemination Dashboard <strong>v0.1</strong></span>
+  <span class="footer-sep">·</span>
+  <span><a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></span>
+  <span class="footer-sep">·</span>
+  <span>Last update: <span id="footer-update-date">—</span></span>
+  <span class="footer-sep">·</span>
+  <span><a href="https://github.com/LukasRoeseler/r2d2" target="_blank">GitHub ↗</a></span>
+</footer>
 
 <script>
 /* ============================================
@@ -582,12 +621,21 @@ function pickOJSPub(sub){
 }
 
 function pickPDFGalleyURL(sub){
-  // Build PDF viewer URL: https://ejournals.uni-muenster.de/replicationresearch/article/view/{submissionId}/{galleyId}
+  // Build PDF viewer URL: https://ejournals.uni-muenster.de/index.php/replicationresearch/article/view/{submissionId}/{galleyId}
   var pub = pickOJSPub(sub);
   if (!pub || !pub.galleys) return null;
   var pdf = pub.galleys.find(function(g){ return g.file && g.file.mimetype === 'application/pdf'; });
   if (!pdf) return null;
   return 'https://ejournals.uni-muenster.de/index.php/replicationresearch/article/view/' + sub.id + '/' + pdf.id;
+}
+
+function pickPDFDirectDownloadURL(sub){
+  // Direct PDF download: .../article/download/{submissionId}/{galleyId}
+  var pub = pickOJSPub(sub);
+  if (!pub || !pub.galleys) return null;
+  var pdf = pub.galleys.find(function(g){ return g.file && g.file.mimetype === 'application/pdf'; });
+  if (!pdf) return null;
+  return 'https://ejournals.uni-muenster.de/index.php/replicationresearch/article/download/' + sub.id + '/' + pdf.id;
 }
 
 function getOJSMeta(sub){
@@ -598,16 +646,28 @@ function getOJSMeta(sub){
   var subtitle = pub.subtitle && (pub.subtitle[loc] || pub.subtitle.en_US || Object.values(pub.subtitle)[0]);
   var datePub  = pub.datePublished || null;
   var authors  = pub.authorsString || '';
+
+  // Build authorsList with names + ORCIDs (from individual author records if present)
+  var authorsList = [];
+  if (Array.isArray(pub.authors)) {
+    authorsList = pub.authors.map(function(a){
+      var given = (a.givenName && (a.givenName[loc] || a.givenName.en_US || Object.values(a.givenName)[0])) || '';
+      var family = (a.familyName && (a.familyName[loc] || a.familyName.en_US || Object.values(a.familyName)[0])) || '';
+      var name = (given + ' ' + family).trim() || (a.fullName && (a.fullName[loc] || a.fullName.en_US || Object.values(a.fullName)[0])) || '';
+      return { name: name, orcid: a.orcid || null };
+    }).filter(function(a){ return a.name; });
+  }
+
   var sectionName  = (sub.sectionId || pub.sectionId) ? SECTIONS[sub.sectionId || pub.sectionId] : null;
-  // Fallback if sub.sectionId is null but pub has it
   if (!sectionName && pub.sectionId) sectionName = SECTIONS[pub.sectionId];
   var categoryNames = (pub.categoryIds || []).map(function(id){ return CATEGORIES[id]; }).filter(Boolean);
   var pdfUrl = pickPDFGalleyURL(sub);
+  var pdfDownloadUrl = pickPDFDirectDownloadURL(sub);
   var articleUrl = pub.urlPublished || null;
   return {
-    title: title, subtitle: subtitle, datePublished: datePub, authors: authors,
+    title: title, subtitle: subtitle, datePublished: datePub, authors: authors, authorsList: authorsList,
     section: sectionName, categories: categoryNames,
-    pdfUrl: pdfUrl, articleUrl: articleUrl,
+    pdfUrl: pdfUrl, pdfDownloadUrl: pdfDownloadUrl, articleUrl: articleUrl,
     year: datePub ? parseInt(datePub.slice(0,4),10) : null
   };
 }
@@ -777,13 +837,15 @@ function makePub(doi){
   return {
     doi: doi, ojsId: ojsIdFromDoi(doi), doiKey: doiSortKey(doi),
     // OJS metadata
-    title: null, subtitle: null, authors: '', datePublished: null, year: null,
-    section: null, categories: [], pdfUrl: null, articleUrl: 'https://doi.org/'+doi,
+    title: null, subtitle: null, authors: '', authorsList: [], datePublished: null, year: null,
+    section: null, categories: [], pdfUrl: null, pdfDownloadUrl: null, articleUrl: 'https://doi.org/'+doi,
     // Citations
-    oaCites: null, dcCites: null, crCites: null,
+    oaCites: null, dcCites: null, crCites: null, crNotAvailable: false,
     countsByYear: null,
     // OJS stats
-    ojsViews: null, ojsPdfs: null, ojsViewsByMonth: null
+    ojsViews: null, ojsPdfs: null, ojsViewsByMonth: null,
+    // Bluesky
+    bskyCount: null
   };
 }
 
@@ -799,7 +861,7 @@ function buildCard(pub, idx){
   var topTags = '<div class="pub-top-meta">';
   if (pub.section)    topTags += '<span class="tag tag-section">' + escH(pub.section) + '</span>';
   pub.categories.forEach(function(c){ topTags += '<span class="tag tag-category">' + escH(c) + '</span>'; });
-  if (pub.datePublished) topTags += '<span class="tag tag-date">' + escH(fmtDate(pub.datePublished)) + '</span>';
+  if (pub.year) topTags += '<span class="tag tag-date">' + escH(pub.year) + '</span>';
   topTags += '</div>';
 
   // Title + subtitle
@@ -807,24 +869,54 @@ function buildCard(pub, idx){
       '<a href="'+titleClickUrl+'" target="_blank" class="pub-title">' + escH(pub.title || pub.doi) + '</a>'
     + (pub.subtitle ? '<div class="pub-subtitle">' + escH(pub.subtitle) + '</div>' : '');
 
-  // Authors
-  var authorsBlock = '<div class="pub-authors">' + escH(pub.authors) + '</div>';
+  // Authors — render as plain text from authorsString, or as linked names if authorsList is populated
+  var authorsBlock;
+  if (pub.authorsList && pub.authorsList.length) {
+    authorsBlock = '<div class="pub-authors">' + pub.authorsList.map(function(a){
+      if (a.orcid) {
+        return '<a href="https://orcid.org/' + escH(a.orcid) + '" target="_blank" class="author-link">'
+          + escH(a.name)
+          + '<svg class="orcid-icon" viewBox="0 0 256 256" aria-label="ORCID"><circle cx="128" cy="128" r="128" fill="#A6CE39"/><path fill="#fff" d="M86.3 186.2H70.9V79.1h15.4v107.1zm22.6-107.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7C191.7 111.2 178 93 148 93h-23.7v79.4zM88.7 56.8c0 5.5-4.5 10.1-10.1 10.1s-10.1-4.6-10.1-10.1c0-5.6 4.5-10.1 10.1-10.1s10.1 4.6 10.1 10.1z"/></svg>'
+          + '</a>';
+      }
+      return '<span class="author-link">' + escH(a.name) + '</span>';
+    }).join(', ') + '</div>';
+  } else {
+    authorsBlock = '<div class="pub-authors">' + escH(pub.authors) + '</div>';
+  }
 
-  // Action buttons: PDF only (title already links to DOI page)
+  // Action buttons: PDF viewer + direct PDF download
   var actions = '<div class="pub-actions">';
   if (pub.pdfUrl) {
     actions += '<a href="'+pub.pdfUrl+'" target="_blank" class="action-btn action-btn-primary">'
       + '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 1h6l4 4v10H4V1z"/><path d="M10 1v4h4"/><path d="M6 9h4M6 12h4"/></svg>'
-      + 'PDF</a>';
+      + 'View PDF</a>';
+  }
+  if (pub.pdfDownloadUrl) {
+    actions += '<a href="'+pub.pdfDownloadUrl+'" target="_blank" download class="action-btn action-btn-secondary">'
+      + '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 1v10M4 7l4 4 4-4M2 14h12"/></svg>'
+      + 'Download PDF</a>';
   }
   actions += '</div>';
 
   // Metrics
+  var crossrefVal;
+  if (pub.crCites !== null) crossrefVal = fmtNum(pub.crCites);
+  else if (pub.crNotAvailable) crossrefVal = '<span title="DOI registered with DataCite, not Crossref" style="color:var(--text-muted);font-weight:400">n/a</span>';
+  else crossrefVal = spin();
+
   var citeBadges = '<div class="metric-group">'
     + '<span class="metric-group-label">Citations:</span>'
     + '<span class="mbadge"><span class="src-dot" style="background:#2ecc71"></span>OpenAlex <span class="val">'+(pub.oaCites!==null?fmtNum(pub.oaCites):spin())+'</span></span>'
     + '<span class="mbadge"><span class="src-dot" style="background:#e67e22"></span>DataCite <span class="val">'+(pub.dcCites!==null?fmtNum(pub.dcCites):spin())+'</span></span>'
-    + '<span class="mbadge"><span class="src-dot" style="background:#e74c3c"></span>Crossref <span class="val">'+(pub.crCites!==null?fmtNum(pub.crCites):spin())+'</span></span>'
+    + '<span class="mbadge"><span class="src-dot" style="background:#e74c3c"></span>Crossref <span class="val">'+crossrefVal+'</span></span>'
+    + '</div>';
+
+  // Bluesky mentions badge
+  var bskyLink = 'https://bsky.app/search?q=' + encodeURIComponent(pub.doi);
+  var bskyBadge = '<div class="metric-group">'
+    + '<span class="metric-group-label">Social:</span>'
+    + '<a href="'+bskyLink+'" target="_blank" class="mbadge mbadge-link"><span class="src-dot" style="background:#1185fe"></span>Bluesky posts <span class="val">'+(pub.bskyCount!==null?fmtNum(pub.bskyCount):spin())+'</span></a>'
     + '</div>';
 
   var ojsData = pub.ojsId ? OJS_DATA[pub.ojsId] : null;
@@ -860,6 +952,7 @@ function buildCard(pub, idx){
     +   '<div class="metrics-block">'
     +     citeBadges
     +     viewsRow
+    +     bskyBadge
     +     citeSpark
     +     ojsSpark
     +   '</div>'
@@ -1038,11 +1131,13 @@ async function loadAll(){
       pub.title         = meta.title;
       pub.subtitle      = meta.subtitle;
       pub.authors       = meta.authors;
+      pub.authorsList   = meta.authorsList || [];
       pub.datePublished = meta.datePublished;
       pub.year          = meta.year;
       pub.section       = meta.section;
       pub.categories    = meta.categories;
       pub.pdfUrl        = meta.pdfUrl;
+      pub.pdfDownloadUrl = meta.pdfDownloadUrl;
       pub.articleUrl    = meta.articleUrl || pub.articleUrl;
     });
   });
@@ -1095,11 +1190,29 @@ async function loadAll(){
     return fetchJSON('https://api.crossref.org/works/'+pub.doi).then(function(cr){
       if (cr && cr.message && cr.message['is-referenced-by-count'] != null) {
         pub.crCites = cr.message['is-referenced-by-count'];
+      } else {
+        // Crossref returned no record — DOI is likely DataCite-registered, not in Crossref
+        pub.crNotAvailable = true;
       }
     });
   });
+  // Bluesky public search: count posts mentioning either the DOI string or the doi.org URL
+  var bskyProms = ALL_PUBS.map(function(pub){
+    var q1 = encodeURIComponent(pub.doi);
+    var q2 = encodeURIComponent('doi.org/' + pub.doi);
+    return Promise.all([
+      fetchJSON('https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q='+q1+'&limit=100'),
+      fetchJSON('https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q='+q2+'&limit=100')
+    ]).then(function(res){
+      var uris = {};
+      [res[0], res[1]].forEach(function(r){
+        if (r && r.posts) r.posts.forEach(function(p){ if (p.uri) uris[p.uri] = true; });
+      });
+      pub.bskyCount = Object.keys(uris).length;
+    }).catch(function(){ pub.bskyCount = null; });
+  });
 
-  await Promise.all([ojsCSV].concat(oaProms).concat(crProms));
+  await Promise.all([ojsCSV].concat(oaProms).concat(crProms).concat(bskyProms));
 
   setLoaderStep('cites','done');
   setLoaderProgress(100);
@@ -1125,6 +1238,8 @@ async function loadAll(){
   var ojsEl = document.getElementById('ojs-note');
   if (OJS_FILE_DATE) {
     ojsEl.innerHTML = 'OJS stats as of <strong>'+OJS_FILE_DATE+'</strong><br><a href="https://github.com/LukasRoeseler/r2d2/tree/main/statistics" target="_blank">Update CSV ↗</a>';
+    var f = document.getElementById('footer-update-date');
+    if (f) f.textContent = OJS_FILE_DATE;
   } else {
     ojsEl.textContent = 'OJS stats: file not found.';
   }
