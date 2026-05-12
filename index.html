@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>R2D2 — Dissemination Dashboard</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23fff'/%3E%3Ctext x='3' y='27' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='30' fill='%231a7f8e'%3ER%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1197,20 +1198,67 @@ async function loadAll(){
       }
     });
   });
-  // Bluesky: search by link URL (facet links + embeds), not by text content
-  // The url= parameter matches posts that contain a link pointing to the given URL
+  // Bluesky: multi-strategy search for posts mentioning DOIs
+  // Strategy 1: url= param (matches facet links + embeds — may not be supported on all servers)
+  // Strategy 2: text search for unique DOI fragment, then client-side filter by facet/embed URIs
+  // Strategy 3: text search for the short doi.org/... string
   var bskyProms = ALL_PUBS.map(function(pub){
-    var doiUrl = encodeURIComponent('https://doi.org/' + pub.doi);
-    return fetchJSON('https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?url='+doiUrl+'&limit=100')
-      .then(function(res){
-        if (res && res.posts) {
-          pub.bskyCount = res.posts.length;
-          // Store post URIs for potential future display
-          pub.bskyPosts = res.posts.map(function(p){ return { uri: p.uri, author: p.author && p.author.handle, text: (p.record && p.record.text) || '', likeCount: p.likeCount||0, repostCount: p.repostCount||0 }; });
-        } else {
-          pub.bskyCount = 0;
-        }
-      }).catch(function(){ pub.bskyCount = null; });
+    var fullDoiUrl = 'https://doi.org/' + pub.doi;
+    // Extract a unique fragment from the DOI for text search (last part, e.g. "replicationresearch-2026-9577")
+    var doiSuffix = pub.doi.split('/').pop() || pub.doi;
+
+    // Build URLs for all strategies
+    var urlParam   = 'https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?url=' + encodeURIComponent(fullDoiUrl) + '&limit=100';
+    var textSearch = 'https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=' + encodeURIComponent(doiSuffix) + '&limit=100';
+
+    return Promise.all([
+      fetchJSON(urlParam).catch(function(){ return null; }),
+      fetchJSON(textSearch).catch(function(){ return null; })
+    ]).then(function(results){
+      var seen = {};
+      var matched = [];
+
+      results.forEach(function(res){
+        if (!res || !res.posts) return;
+        res.posts.forEach(function(post){
+          if (seen[post.uri]) return;
+
+          // Check if the post actually references this DOI:
+          // 1. Check facet link URIs
+          var facets = (post.record && post.record.facets) || [];
+          var facetMatch = facets.some(function(f){
+            return (f.features || []).some(function(feat){
+              return feat.uri && feat.uri.indexOf(pub.doi) !== -1;
+            });
+          });
+
+          // 2. Check embed external URI (link card)
+          var embed = post.record && post.record.embed;
+          var embedMatch = false;
+          if (embed) {
+            var ext = embed.external || (embed.record && embed.record.external);
+            if (ext && ext.uri && ext.uri.indexOf(pub.doi) !== -1) embedMatch = true;
+          }
+
+          // 3. Check post text itself
+          var textMatch = (post.record && post.record.text && post.record.text.indexOf(pub.doi) !== -1);
+
+          if (facetMatch || embedMatch || textMatch) {
+            seen[post.uri] = true;
+            matched.push({
+              uri: post.uri,
+              author: post.author && post.author.handle,
+              text: (post.record && post.record.text) || '',
+              likeCount: post.likeCount || 0,
+              repostCount: post.repostCount || 0
+            });
+          }
+        });
+      });
+
+      pub.bskyCount = matched.length;
+      pub.bskyPosts = matched;
+    }).catch(function(){ pub.bskyCount = 0; });
   });
 
   await Promise.all([ojsCSV].concat(oaProms).concat(crProms).concat(bskyProms));
