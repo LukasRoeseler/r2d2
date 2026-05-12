@@ -840,22 +840,15 @@ function buildCard(pub, idx){
   var citeSpark = pub.countsByYear ? buildSparkline(pub.countsByYear, '#2ecc71', 'Citations by year (OpenAlex)') : '';
   var ojsSpark  = (ojsData && ojsData.views) ? buildOJSSparkline(ojsData.views, 'Abstract views by month (OJS)') : '';
 
-  // Build citation chip: all authors + truncated title
-  var shortTitle = pub.title || pub.doi;
-  if (shortTitle.length > 70) shortTitle = shortTitle.slice(0, 67).trim() + '…';
-  var citeChipText = (pub.authors ? pub.authors + ' — ' : '') + shortTitle;
-
   // Footer
   var footer = '<div class="pub-footer">'
-    + '<a href="'+doiUrl+'" target="_blank" class="doi-chip">↗ '+escH(citeChipText)+'</a>'
+    + '<a href="'+doiUrl+'" target="_blank" class="doi-chip">↗ '+escH(pub.doi)+'</a>'
     + '<span style="flex:1"></span>'
     + '<a href="https://openalex.org/works?filter=doi:'+pub.doi+'" target="_blank" class="pub-link">OpenAlex</a>'
     + '<span class="link-sep"></span>'
     + '<a href="'+gsUrl+'" target="_blank" class="pub-link">Scholar</a>'
     + '<span class="link-sep"></span>'
     + '<a href="https://commons.datacite.org/doi.org/'+pub.doi+'" target="_blank" class="pub-link">DataCite</a>'
-    + '<span class="link-sep"></span>'
-    + '<a href="https://www.altmetric.com/details/'+pub.doi+'" target="_blank" class="pub-link">Altmetric</a>'
     + '</div>';
 
   return '<div class="pub-item" style="animation-delay:'+(idx*0.07)+'s">'
@@ -1034,7 +1027,8 @@ async function loadAll(){
 
   ALL_PUBS = rawDois.map(makePub);
 
-  /* 2 — OJS submission metadata (title, subtitle, authors, section, categories, PDF URL) */
+  /* 2 — OJS submission metadata (title, subtitle, authors, section, categories, PDF URL)
+        + DataCite metadata as fallback (title, authors, date) in case OJS fails */
   var ojsPromises = ALL_PUBS.map(function(pub){
     if (!pub.ojsId) return Promise.resolve();
     return loadOJSSubmission(pub.ojsId).then(function(sub){
@@ -1053,7 +1047,30 @@ async function loadAll(){
     });
   });
 
-  await Promise.all(ojsPromises);
+  // DataCite fallback metadata (always fetch — provides backup if OJS CORS-blocked)
+  var dcMetaPromises = ALL_PUBS.map(function(pub){
+    return fetchJSON('https://api.datacite.org/dois/'+encodeURIComponent(pub.doi)).then(function(dc){
+      if (!dc || !dc.data || !dc.data.attributes) return;
+      var attrs = dc.data.attributes;
+      // Citation count (always use this since it's authoritative DataCite data)
+      if (attrs.citationCount != null) pub.dcCites = attrs.citationCount;
+      // Title/authors fallback ONLY if OJS didn't populate them
+      if (!pub.title && attrs.titles && attrs.titles[0]) {
+        pub.title = attrs.titles[0].title || null;
+      }
+      if (!pub.authors && attrs.creators && attrs.creators.length) {
+        pub.authors = attrs.creators.map(function(c){
+          return c.familyName ? c.familyName + ', ' + (c.givenName ? c.givenName.charAt(0)+'.' : '') : (c.name || '');
+        }).join(', ');
+      }
+      if (!pub.year && attrs.publicationYear) {
+        pub.year = attrs.publicationYear;
+        pub.datePublished = pub.datePublished || (attrs.publicationYear + '-01-01');
+      }
+    });
+  });
+
+  await Promise.all(ojsPromises.concat(dcMetaPromises));
 
   setLoaderStep('meta','done');
   setLoaderStep('cites','active');
@@ -1074,13 +1091,6 @@ async function loadAll(){
       pub.countsByYear = oa.counts_by_year || [];
     });
   });
-  var dcProms  = ALL_PUBS.map(function(pub){
-    return fetchJSON('https://api.datacite.org/dois/'+encodeURIComponent(pub.doi)).then(function(dc){
-      if (dc && dc.data && dc.data.attributes && dc.data.attributes.citationCount != null) {
-        pub.dcCites = dc.data.attributes.citationCount;
-      }
-    });
-  });
   var crProms  = ALL_PUBS.map(function(pub){
     return fetchJSON('https://api.crossref.org/works/'+pub.doi).then(function(cr){
       if (cr && cr.message && cr.message['is-referenced-by-count'] != null) {
@@ -1089,7 +1099,7 @@ async function loadAll(){
     });
   });
 
-  await Promise.all([ojsCSV].concat(oaProms).concat(dcProms).concat(crProms));
+  await Promise.all([ojsCSV].concat(oaProms).concat(crProms));
 
   setLoaderStep('cites','done');
   setLoaderProgress(100);
