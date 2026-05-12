@@ -307,7 +307,7 @@ body {
 <body>
 
 <header class="site-header">
-  <a href="https://www.uni-muenster.de/Ejournals/index.php/repres/index" target="_blank" class="logo-link" title="Replication Research Journal">
+  <a href="https://ejournals.uni-muenster.de/index.php/replicationresearch/index" target="_blank" class="logo-link" title="Replication Research Journal">
     <img src="https://ejournals.uni-muenster.de/public/journals/36/pageHeaderLogoImage_en_US.png"
          alt="Replication Research" class="header-logo" onerror="this.style.display='none'">
   </a>
@@ -365,9 +365,9 @@ body {
 /* ============================================
    CONFIG
 ============================================ */
-var DOIS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2_bibliometrics/refs/heads/main/dois.txt';
-var STATS_DIR = 'https://api.github.com/repos/LukasRoeseler/r2_bibliometrics/contents/statistics';
-var OJS_BASE  = 'https://ejournals.uni-muenster.de/replicationresearch/api/v1';
+var DOIS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/dois.txt';
+var STATS_DIR = 'https://api.github.com/repos/LukasRoeseler/r2d2/contents/statistics';
+var OJS_BASE  = 'https://ejournals.uni-muenster.de/index.php/replicationresearch/api/v1';
 
 /* ============================================
    STATE
@@ -794,7 +794,7 @@ async function loadOJSStats(){
   var newest = csvFiles[0];
   var dm = newest.name.match(/statistics-(\d{4})(\d{2})(\d{2})\.csv/);
   if (dm) OJS_FILE_DATE = dm[1]+'-'+dm[2]+'-'+dm[3];
-  var csv = await fetchText(newest.download_url || ('https://raw.githubusercontent.com/LukasRoeseler/r2_bibliometrics/refs/heads/main/statistics/'+newest.name));
+  var csv = await fetchText(newest.download_url || ('https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/statistics/'+newest.name));
   if (!csv) return;
   OJS_DATA = parseOJS(csv);
 }
@@ -898,7 +898,7 @@ async function loadAll(){
   /* 7 — OJS file date note */
   var ojsEl = document.getElementById('ojs-note');
   if (OJS_FILE_DATE) {
-    ojsEl.innerHTML = 'OJS stats as of <strong>'+OJS_FILE_DATE+'</strong><br><a href="https://github.com/LukasRoeseler/r2_bibliometrics/tree/main/statistics" target="_blank">Update CSV ↗</a>';
+    ojsEl.innerHTML = 'OJS stats as of <strong>'+OJS_FILE_DATE+'</strong><br><a href="https://github.com/LukasRoeseler/r2d2/tree/main/statistics" target="_blank">Update CSV ↗</a>';
   } else {
     ojsEl.textContent = 'OJS stats: file not found.';
   }
