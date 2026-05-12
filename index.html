@@ -365,10 +365,12 @@ body {
   margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
 }
 .doi-chip {
-  font-size: 10.5px; color: var(--r2-blue); text-decoration: none;
-  font-family: var(--font-mono); background: var(--r2-blue-light);
-  border: 1px solid var(--r2-blue-border); padding: 2px 7px; border-radius: 4px;
+  font-size: 11px; color: var(--r2-blue); text-decoration: none;
+  font-family: var(--font); font-weight: 500;
+  background: var(--r2-blue-light);
+  border: 1px solid var(--r2-blue-border); padding: 3px 9px; border-radius: 4px;
   transition: background 0.15s;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .doi-chip:hover { background: #d6ebf6; }
 .oa-badge {
@@ -838,9 +840,14 @@ function buildCard(pub, idx){
   var citeSpark = pub.countsByYear ? buildSparkline(pub.countsByYear, '#2ecc71', 'Citations by year (OpenAlex)') : '';
   var ojsSpark  = (ojsData && ojsData.views) ? buildOJSSparkline(ojsData.views, 'Abstract views by month (OJS)') : '';
 
+  // Build citation chip: all authors + truncated title
+  var shortTitle = pub.title || pub.doi;
+  if (shortTitle.length > 70) shortTitle = shortTitle.slice(0, 67).trim() + '…';
+  var citeChipText = (pub.authors ? pub.authors + ' — ' : '') + shortTitle;
+
   // Footer
   var footer = '<div class="pub-footer">'
-    + '<a href="'+doiUrl+'" target="_blank" class="doi-chip">↗ '+escH(pub.doi)+'</a>'
+    + '<a href="'+doiUrl+'" target="_blank" class="doi-chip">↗ '+escH(citeChipText)+'</a>'
     + '<span style="flex:1"></span>'
     + '<a href="https://openalex.org/works?filter=doi:'+pub.doi+'" target="_blank" class="pub-link">OpenAlex</a>'
     + '<span class="link-sep"></span>'
