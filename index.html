@@ -252,7 +252,8 @@ async function fetchText(url, timeout) {
 ───────────────────────────────────────────── */
 function parseOJS(csv) {
   var lines = csv.split('\n');
-  // skip first 4 header lines (PKP header rows), find the data line with column names
+
+  // Find the header row (contains ",ID,")
   var dataStart = 0;
   for (var i = 0; i < lines.length; i++) {
     if (lines[i].indexOf(',ID,') !== -1 || lines[i].indexOf('"ID"') !== -1) {
@@ -261,34 +262,84 @@ function parseOJS(csv) {
     }
   }
 
-  // result: ojsId → { views: {month: count}, pdfs: {month: count} }
-  var byId = {};
+  // CSV columns (0-indexed):
+  // 0=empty  1=ID  2=Type  3=Title  4=FileType  5=Article  6=Journal
+  // 7=Section  8=City  9=Region  10=Country  11=Month  12=Metric  13=Count  14=Issue
 
+  // Two-pass approach:
+  // Pass 1: collect all Article rows → build ojsArticleId → { views, pdfs }
+  //         also build titleKey → ojsArticleId map for PDF matching
+  // Pass 2: collect Submission Files/PDF rows → look up ojsArticleId via Article title (col5)
+
+  var byId = {};         // ojsId (string) → { views: {month:n}, pdfs: {month:n} }
+  var titleToId = {};    // normalised article title → ojsId
+
+  // Pass 1: Article rows
   for (var i = dataStart; i < lines.length; i++) {
     var line = lines[i].trim();
     if (!line) continue;
     var cols = parseCSVLine(line);
     if (cols.length < 14) continue;
 
-    // cols: [empty, ID, Type, Title, FileType, Article, Journal, Section, City, Region, Country, Month, Metric, Count, Issue]
-    var id       = (cols[1]||'').trim();
-    var type     = (cols[2]||'').trim().replace(/^"|"$/g,'');
-    var fileType = (cols[4]||'').trim().replace(/^"|"$/g,'');
-    var month    = (cols[11]||'').trim().replace(/^"|"$/g,'');
-    var count    = parseInt((cols[13]||'').trim().replace(/^"|"$/g,''), 10);
+    var id      = clean(cols[1]);
+    var type    = clean(cols[2]);
+    var title   = clean(cols[3]);   // article title (for Article rows, col3 = Title = article name)
+    var month   = clean(cols[11]);
+    var count   = parseInt(clean(cols[13]), 10);
 
-    if (!id || isNaN(count) || !month) continue;
+    if (type !== 'Article' || !id || isNaN(count) || !month) continue;
 
     if (!byId[id]) byId[id] = { views: {}, pdfs: {} };
+    byId[id].views[month] = (byId[id].views[month] || 0) + count;
 
-    if (type === 'Article') {
-      byId[id].views[month] = (byId[id].views[month] || 0) + count;
-    } else if (type === 'Submission Files' && fileType === 'PDF') {
-      byId[id].pdfs[month] = (byId[id].pdfs[month] || 0) + count;
+    // Map normalised title → id for PDF lookup
+    var key = normTitle(title);
+    if (key) titleToId[key] = id;
+  }
+
+  // Pass 2: Submission Files / PDF rows
+  for (var i = dataStart; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+    var cols = parseCSVLine(line);
+    if (cols.length < 14) continue;
+
+    var type     = clean(cols[2]);
+    var fileType = clean(cols[4]);
+    var article  = clean(cols[5]);  // col5 = "Article" column = parent article title
+    var month    = clean(cols[11]);
+    var count    = parseInt(clean(cols[13]), 10);
+
+    if (type !== 'Submission Files' || fileType !== 'PDF') continue;
+    if (!article || isNaN(count) || !month) continue;
+
+    // Match to article ID via title
+    var aid = titleToId[normTitle(article)];
+    if (!aid) {
+      // Fallback: fuzzy — find best matching key
+      var artNorm = normTitle(article);
+      for (var k in titleToId) {
+        if (k.indexOf(artNorm.slice(0,20)) !== -1 || artNorm.indexOf(k.slice(0,20)) !== -1) {
+          aid = titleToId[k]; break;
+        }
+      }
     }
+    if (!aid) continue;
+
+    if (!byId[aid]) byId[aid] = { views: {}, pdfs: {} };
+    byId[aid].pdfs[month] = (byId[aid].pdfs[month] || 0) + count;
   }
 
   return byId;
+}
+
+function clean(s) {
+  return (s || '').trim().replace(/^"|"$/g, '');
+}
+
+function normTitle(s) {
+  // lowercase, strip punctuation, collapse spaces — good enough for matching
+  return (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function parseCSVLine(line) {
