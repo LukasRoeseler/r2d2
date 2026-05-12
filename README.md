@@ -1,2 +1,4 @@
-# r2_bibliometrics
-Includes bilbiometric descriptions of R2 publications (WIP)
+# R2 Bibliometrics
+This website provides a semi-automated report of Replication Research publications.
+
+It is work in progress.
