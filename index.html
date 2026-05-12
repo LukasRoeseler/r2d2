@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Replication Research — Publication Metrics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --r2-blue: #1a3a5c;
+  --r2-teal: #1a7f8e;
+  --r2-red: #c0392b;
+  --r2-link: #1a6fa8;
+  --bg: #ffffff;
+  --bg2: #f8f7f4;
+  --bg3: #f0ede6;
+  --border: #ddd9d0;
+  --border2: #c8c2b6;
+  --text: #1a1916;
+  --text2: #4a4740;
+  --text3: #8a8780;
+  --font-serif: 'Lora', Georgia, serif;
+  --font-sans: 'Source Sans 3', sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  padding: 14px 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.header-logo {
+  height: 54px;
+  object-fit: contain;
+  display: block;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  padding: 0 48px;
+  height: 44px;
+  gap: 0;
+}
+
+.header-nav a {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text2);
+  text-decoration: none;
+  padding: 0 16px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.header-nav a:hover { color: var(--r2-teal); }
+.header-nav a.active { color: var(--r2-blue); border-bottom-color: var(--r2-teal); font-weight: 600; }
+
+.page-body {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 52px 48px;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 72px;
+  align-items: start;
+}
+
+.page-sidebar {
+  position: sticky;
+  top: 32px;
+}
+
+.page-heading {
+  font-family: var(--font-serif);
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1.12;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  margin-bottom: 18px;
+}
+
+.page-sub {
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 300;
+  line-height: 1.6;
+  margin-bottom: 28px;
+  border-left: 2px solid var(--r2-teal);
+  padding-left: 12px;
+}
+
+.sidebar-vol {
+  border-top: 2px solid var(--r2-teal);
+  padding-top: 14px;
+  margin-bottom: 20px;
+}
+
+.sidebar-vol .vol-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.sidebar-vol .vol-value {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--r2-blue);
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-row:last-child { border-bottom: none; }
+
+.stat-label { font-size: 12px; color: var(--text3); font-weight: 300; }
+
+.stat-value {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--text);
+}
+
+.refresh-btn {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 8px 0;
+  border: 1px solid var(--r2-teal);
+  background: transparent;
+  color: var(--r2-teal);
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.15s, color 0.15s;
+}
+
+.refresh-btn:hover { background: var(--r2-teal); color: #fff; }
+.refresh-btn:disabled { opacity: 0.45; cursor: default; }
+
+.source-legend {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.legend-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text3);
+  padding: 3px 0;
+}
+
+.legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* Main content */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border2);
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.section-count { font-size: 13px; color: var(--text3); font-weight: 300; }
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text3);
+  padding: 10px 0 18px;
+  font-weight: 300;
+}
+
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text3); flex-shrink: 0;
+}
+.status-dot.loading { background: var(--r2-teal); animation: pulse 1s ease-in-out infinite; }
+.status-dot.done { background: #27ae60; }
+.status-dot.error { background: var(--r2-red); }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* Publication list item — Wallrich style */
+.pub-list { display: flex; flex-direction: column; }
+
+.pub-item {
+  display: grid;
+  grid-template-columns: 1fr 84px;
+  gap: 20px;
+  align-items: start;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeUp 0.35s forwards;
+}
+
+@keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+
+.pub-item:nth-child(1) { animation-delay: 0.04s; }
+.pub-item:nth-child(2) { animation-delay: 0.11s; }
+.pub-item:nth-child(3) { animation-delay: 0.18s; }
+
+.pub-type-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.pub-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 2px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tag-editorial { background: #e6f3f8; color: #1a6fa8; }
+.tag-vol { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+.tag-year { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+
+.pub-title {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--r2-link);
+  text-decoration: none;
+  display: block;
+  margin-bottom: 7px;
+  transition: color 0.15s;
+}
+
+.pub-title:hover { color: var(--r2-teal); }
+
+.pub-authors {
+  font-size: 14px;
+  color: var(--text2);
+  font-weight: 300;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+/* Metric badge row — exactly Wallrich Slides/Video button style */
+.metric-badges {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.mbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--bg);
+  white-space: nowrap;
+}
+
+.mbadge .src-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+.mbadge .val {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--text);
+  margin-left: 2px;
+}
+
+.spinner-sm {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border: 1.5px solid var(--border2);
+  border-top-color: var(--r2-teal);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.pub-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.doi-chip {
+  font-size: 11px;
+  color: var(--r2-link);
+  text-decoration: none;
+  font-family: 'Courier New', monospace;
+  background: #f0f6fb;
+  border: 1px solid #c4dcf0;
+  padding: 2px 8px;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+
+.doi-chip:hover { background: #dbeafe; }
+
+.oa-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.oa-open { background: #e6f9f0; color: #166534; }
+.oa-closed { background: #fef2f2; color: #991b1b; }
+.oa-unknown { background: var(--bg3); color: var(--text3); }
+
+.pub-links {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 11px;
+}
+
+.pub-link {
+  font-size: 12px;
+  color: var(--r2-link);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  font-weight: 600;
+  transition: border-color 0.15s;
+}
+
+.pub-link:hover { border-bottom-color: var(--r2-link); }
+.link-sep { width: 1px; height: 11px; background: var(--border2); display: inline-block; }
+
+/* Donut column */
+.pub-donut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: 8px;
+}
+
+.donut-svg { width: 76px; height: 76px; }
+
+.donut-label {
+  font-size: 9px;
+  color: var(--text3);
+  text-align: center;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.donut-detail {
+  font-size: 10px;
+  color: var(--text3);
+  text-align: center;
+}
+
+@media (max-width: 780px) {
+  .page-body { grid-template-columns: 1fr; gap: 32px; padding: 28px 20px; }
+  .page-sidebar { position: static; }
+  .header-top, .header-nav { padding-left: 20px; padding-right: 20px; }
+  .pub-item { grid-template-columns: 1fr 68px; }
+  .page-heading { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-top">
+    <img src="https://ejournals.uni-muenster.de/public/journals/36/pageHeaderLogoImage_en_US.png"
+         alt="Replication Research" class="header-logo"
+         onerror="this.style.display='none'">
+  </div>
+  <nav class="header-nav">
+    <a href="https://www.uni-muenster.de/Ejournals/index.php/repres/index" target="_blank">Replication Research</a>
+    <a href="https://www.uni-muenster.de/Ejournals/index.php/repres/issue/archive" target="_blank">Issues</a>
+    <a href="https://www.uni-muenster.de/Ejournals/index.php/repres/about/submissions" target="_blank">Submissions</a>
+    <a href="https://www.uni-muenster.de/Ejournals/index.php/repres/about/editorialPolicies" target="_blank">Reviewer Guidelines</a>
+    <a href="#" class="active">Publication Metrics</a>
+  </nav>
+</header>
+
+<div class="page-body">
+
+  <aside class="page-sidebar">
+    <h1 class="page-heading">Publication<br>Metrics</h1>
+    <p class="page-sub">Bibliometrics &amp; altmetrics for all R2 publications, sourced live from DataCite, Altmetric, OpenAlex &amp; Semantic Scholar.</p>
+
+    <div class="sidebar-vol">
+      <div class="vol-label">Current issue</div>
+      <div class="vol-value">Vol. 2 (2026)</div>
+    </div>
+
+    <div class="stat-row">
+      <span class="stat-label">Publications</span>
+      <span class="stat-value" id="sum-pubs">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Total citations</span>
+      <span class="stat-value" id="sum-cites">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Avg Altmetric score</span>
+      <span class="stat-value" id="sum-altm">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Open Access</span>
+      <span class="stat-value" id="sum-oa">—</span>
+    </div>
+
+    <button class="refresh-btn" id="refresh-btn" onclick="loadAll()">↺ Refresh metrics</button>
+
+    <div class="source-legend">
+      <div class="legend-title">Data sources</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e67e22"></span>DataCite</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#2ecc71"></span>OpenAlex</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span>Altmetric (donut)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#9b59b6"></span>Semantic Scholar</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#1abc9c"></span>Unpaywall (OA status)</div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="section-header">
+      <h2 class="section-title">All publications</h2>
+      <span class="section-count" id="section-count"></span>
+    </div>
+
+    <div class="status-bar">
+      <span class="status-dot loading" id="status-dot"></span>
+      <span id="status-text">Fetching metrics…</span>
+    </div>
+
+    <div class="pub-list" id="pub-list"></div>
+  </main>
+
+</div>
+
+<script>
+const PUBS = [
+  {
+    doi: "10.17879/replicationresearch-2025-9022",
+    title: "A Community Model for Rigorous and Inclusive Scholarship: Inaugural Editorial of Replication Research (R2)",
+    authors: "Röseler, L., Wallrich, L., Adler, S., Oppong Boakye, P., Evans, T. R., Goltermann, J., … Azevedo, F.",
+    year: 2025,
+    volume: 1,
+    type: "Editorial"
+  },
+  {
+    doi: "10.17879/replicationresearch-2026-9577",
+    title: "From Replication Rates to Replication Evidence: A Guest Editorial",
+    authors: "Holzmeister, F., Camerer, C., Cova, F., Dreber, A., & Johannesson, M.",
+    year: 2026,
+    volume: 2,
+    type: "Editorial"
+  }
+];
+
+async function fetchJSON(url, timeout) {
+  timeout = timeout || 8000;
+  const ctrl = new AbortController();
+  const t = setTimeout(function() { ctrl.abort(); }, timeout);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+function spin() { return '<span class="spinner-sm"></span>'; }
+
+function buildDonut(score, loading) {
+  if (loading) {
+    return '<svg class="donut-svg" viewBox="0 0 76 76">'
+      + '<circle cx="38" cy="38" r="30" fill="none" stroke="#e8e4dc" stroke-width="6"/>'
+      + '<circle cx="38" cy="38" r="30" fill="none" stroke="#ddd8ce" stroke-width="6"'
+      + ' stroke-dasharray="12 7" stroke-linecap="round">'
+      + '<animateTransform attributeName="transform" type="rotate"'
+      + ' from="0 38 38" to="360 38 38" dur="1.3s" repeatCount="indefinite"/>'
+      + '</circle></svg>';
+  }
+  var r = 30, circ = 2 * Math.PI * r;
+  if (score === null || score === undefined) {
+    return '<svg class="donut-svg" viewBox="0 0 76 76">'
+      + '<circle cx="38" cy="38" r="' + r + '" fill="none" stroke="#e8e4dc" stroke-width="6"/>'
+      + '<text x="38" y="42" text-anchor="middle" font-size="10" fill="#aaa" font-family="sans-serif">n/a</text>'
+      + '</svg>';
+  }
+  var capped = Math.min(score, 300);
+  var dash = (capped / 300) * circ;
+  var uid = 'dg_' + score + '_' + Math.random().toString(36).slice(2,6);
+  var colors;
+  if (score < 5) colors = ['#f5cba7','#e67e22'];
+  else if (score < 25) colors = ['#aed6f1','#2980b9'];
+  else if (score < 100) colors = ['#a9dfbf','#27ae60'];
+  else colors = ['#f1948a','#e74c3c'];
+  return '<svg class="donut-svg" viewBox="0 0 76 76">'
+    + '<defs><linearGradient id="' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%">'
+    + '<stop offset="0%" stop-color="' + colors[0] + '"/>'
+    + '<stop offset="100%" stop-color="' + colors[1] + '"/>'
+    + '</linearGradient></defs>'
+    + '<circle cx="38" cy="38" r="' + r + '" fill="none" stroke="#e8e4dc" stroke-width="6"/>'
+    + '<circle cx="38" cy="38" r="' + r + '" fill="none"'
+    + ' stroke="url(#' + uid + ')" stroke-width="6" stroke-linecap="round"'
+    + ' stroke-dasharray="' + dash.toFixed(1) + ' ' + circ.toFixed(1) + '"'
+    + ' transform="rotate(-90 38 38)"/>'
+    + '<text x="38" y="35" text-anchor="middle" font-size="15" font-weight="700"'
+    + ' fill="#1a1916" font-family="Lora,Georgia,serif">' + score + '</text>'
+    + '<text x="38" y="47" text-anchor="middle" font-size="8" fill="#8a8780"'
+    + ' font-family="sans-serif" letter-spacing="0.4">SCORE</text>'
+    + '</svg>';
+}
+
+function buildCard(pub, idx) {
+  var doiUrl = 'https://doi.org/' + pub.doi;
+  return '<div class="pub-item" id="pub-' + idx + '">'
+    + '<div class="pub-content">'
+    + '<div class="pub-type-row">'
+    + '<span class="pub-tag tag-editorial">' + pub.type + '</span>'
+    + '<span class="pub-tag tag-vol">Vol. ' + pub.volume + '</span>'
+    + '<span class="pub-tag tag-year">' + pub.year + '</span>'
+    + '</div>'
+    + '<a href="' + doiUrl + '" target="_blank" class="pub-title">' + pub.title + '</a>'
+    + '<div class="pub-authors">' + pub.authors + '</div>'
+    + '<div class="metric-badges" id="badges-' + idx + '">'
+    + '<div class="mbadge" id="b-dc-' + idx + '"><span class="src-dot" style="background:#e67e22"></span>DataCite <span class="val">' + spin() + '</span></div>'
+    + '<div class="mbadge" id="b-oa-' + idx + '"><span class="src-dot" style="background:#2ecc71"></span>OpenAlex <span class="val">' + spin() + '</span></div>'
+    + '<div class="mbadge" id="b-ss-' + idx + '"><span class="src-dot" style="background:#9b59b6"></span>Sem. Scholar <span class="val">' + spin() + '</span></div>'
+    + '</div>'
+    + '<div class="pub-meta-row">'
+    + '<a href="' + doiUrl + '" target="_blank" class="doi-chip">↗ ' + pub.doi + '</a>'
+    + '<span class="oa-badge oa-unknown" id="oa-' + idx + '">OA?</span>'
+    + '</div>'
+    + '<div class="pub-links">'
+    + '<a href="https://commons.datacite.org/doi.org/' + pub.doi + '" target="_blank" class="pub-link">DataCite</a>'
+    + '<span class="link-sep"></span>'
+    + '<a href="https://openalex.org/works?filter=doi:' + pub.doi + '" target="_blank" class="pub-link">OpenAlex</a>'
+    + '<span class="link-sep"></span>'
+    + '<a href="https://www.semanticscholar.org/paper/' + encodeURIComponent(pub.doi) + '" target="_blank" class="pub-link">Semantic Scholar</a>'
+    + '<span class="link-sep"></span>'
+    + '<a href="https://www.altmetric.com/details/' + pub.doi + '" target="_blank" class="pub-link">Altmetric ↗</a>'
+    + '</div>'
+    + '</div>'
+    + '<div class="pub-donut" id="donut-' + idx + '">'
+    + buildDonut(0, true)
+    + '<div class="donut-label">Altmetric</div>'
+    + '<div class="donut-detail" id="donut-detail-' + idx + '">…</div>'
+    + '</div>'
+    + '</div>';
+}
+
+function setBadge(id, val) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var v = el.querySelector('.val');
+  if (v) v.innerHTML = (val !== null && val !== undefined) ? String(val) : '—';
+}
+
+function setDonut(idx, score, alt) {
+  var wrap = document.getElementById('donut-' + idx);
+  if (!wrap) return;
+  var svg = wrap.querySelector('svg');
+  var lbl = wrap.querySelector('.donut-label');
+  var det = wrap.querySelector('.donut-detail');
+  if (svg) svg.outerHTML = buildDonut(score, false);
+  wrap.innerHTML = buildDonut(score, false)
+    + '<div class="donut-label">Altmetric</div>'
+    + '<div class="donut-detail">' + (score !== null ? 'Score: ' + score : 'No data') + '</div>';
+}
+
+async function fetchOnePub(pub, idx) {
+  var dcProm = fetchJSON('https://api.datacite.org/dois/' + pub.doi);
+  var oaProm = fetchJSON('https://api.openalex.org/works/https://doi.org/' + pub.doi);
+  var altProm = fetchJSON('https://api.altmetric.com/v1/doi/' + pub.doi);
+  var ssProm = fetchJSON('https://api.semanticscholar.org/graph/v1/paper/DOI:' + pub.doi + '?fields=citationCount,influentialCitationCount');
+  var upProm = fetchJSON('https://api.unpaywall.org/v2/' + pub.doi + '?email=r2metrics@example.org');
+
+  var settled = await Promise.allSettled([dcProm, oaProm, altProm, ssProm, upProm]);
+  var dc = settled[0].value;
+  var oa = settled[1].value;
+  var alt = settled[2].value;
+  var ss = settled[3].value;
+  var up = settled[4].value;
+
+  var dcCites = (dc && dc.data && dc.data.attributes && dc.data.attributes.citationCount != null)
+    ? dc.data.attributes.citationCount : null;
+  setBadge('b-dc-' + idx, dcCites !== null ? dcCites : '—');
+
+  var oaCites = (oa && oa.cited_by_count != null) ? oa.cited_by_count : null;
+  setBadge('b-oa-' + idx, oaCites !== null ? oaCites : '—');
+
+  var ssCites = (ss && ss.citationCount != null) ? ss.citationCount : null;
+  setBadge('b-ss-' + idx, ssCites !== null ? ssCites : '—');
+
+  var altScore = (alt && alt.score) ? Math.round(alt.score) : null;
+  setDonut(idx, altScore, alt);
+
+  var isOA = null;
+  var oaStatus = null;
+  if (up) { isOA = up.is_oa; oaStatus = up.oa_status; }
+  else if (oa && oa.open_access) { isOA = oa.open_access.is_oa; oaStatus = oa.open_access.oa_status; }
+
+  var oaEl = document.getElementById('oa-' + idx);
+  if (oaEl) {
+    if (isOA === true) {
+      var lbl = oaStatus ? (oaStatus.charAt(0).toUpperCase() + oaStatus.slice(1)) : 'Open Access';
+      oaEl.textContent = lbl;
+      oaEl.className = 'oa-badge oa-open';
+    } else if (isOA === false) {
+      oaEl.textContent = 'Closed';
+      oaEl.className = 'oa-badge oa-closed';
+    } else {
+      oaEl.textContent = 'OA unknown';
+      oaEl.className = 'oa-badge oa-unknown';
+    }
+  }
+
+  return { dcCites: dcCites, oaCites: oaCites, ssCites: ssCites, altScore: altScore, isOA: isOA };
+}
+
+async function loadAll() {
+  var btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '… Loading';
+
+  document.getElementById('status-dot').className = 'status-dot loading';
+  document.getElementById('status-text').textContent = 'Fetching from DataCite, Altmetric, OpenAlex, Semantic Scholar, Unpaywall…';
+  document.getElementById('section-count').textContent = PUBS.length + ' publication' + (PUBS.length !== 1 ? 's' : '');
+  document.getElementById('sum-pubs').textContent = PUBS.length;
+
+  var list = document.getElementById('pub-list');
+  list.innerHTML = PUBS.map(function(p, i) { return buildCard(p, i); }).join('');
+
+  var results = await Promise.all(PUBS.map(function(p, i) { return fetchOnePub(p, i); }));
+
+  var totalCites = results.reduce(function(s, r) {
+    return s + (r.dcCites !== null ? r.dcCites : (r.oaCites !== null ? r.oaCites : 0));
+  }, 0);
+  document.getElementById('sum-cites').textContent = totalCites;
+
+  var scores = results.map(function(r) { return r.altScore; }).filter(function(x) { return x !== null; });
+  document.getElementById('sum-altm').textContent = scores.length
+    ? Math.round(scores.reduce(function(a,b){return a+b;},0) / scores.length) : '—';
+
+  var oaCount = results.filter(function(r) { return r.isOA === true; }).length;
+  document.getElementById('sum-oa').textContent = Math.round(oaCount / PUBS.length * 100) + '%';
+
+  document.getElementById('status-dot').className = 'status-dot done';
+  var now = new Date();
+  var timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('status-text').textContent =
+    'Metrics loaded · ' + timeStr + ' · Sources: DataCite · OpenAlex · Altmetric · Semantic Scholar · Unpaywall';
+
+  btn.disabled = false;
+  btn.textContent = '↺ Refresh metrics';
+}
+
+loadAll();
+</script>
+</body>
+</html>
