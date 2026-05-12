@@ -913,7 +913,8 @@ function buildCard(pub, idx){
     + '</div>';
 
   // Bluesky mentions badge
-  var bskyLink = 'https://bsky.app/search?q=' + encodeURIComponent(pub.doi);
+  // Bluesky mentions badge — link uses the Bluesky web search url: operator
+  var bskyLink = 'https://bsky.app/search?q=' + encodeURIComponent('https://doi.org/' + pub.doi);
   var bskyBadge = '<div class="metric-group">'
     + '<span class="metric-group-label">Social:</span>'
     + '<a href="'+bskyLink+'" target="_blank" class="mbadge mbadge-link"><span class="src-dot" style="background:#1185fe"></span>Bluesky posts <span class="val">'+(pub.bskyCount!==null?fmtNum(pub.bskyCount):spin())+'</span></a>'
@@ -1196,20 +1197,20 @@ async function loadAll(){
       }
     });
   });
-  // Bluesky public search: count posts mentioning either the DOI string or the doi.org URL
+  // Bluesky: search by link URL (facet links + embeds), not by text content
+  // The url= parameter matches posts that contain a link pointing to the given URL
   var bskyProms = ALL_PUBS.map(function(pub){
-    var q1 = encodeURIComponent(pub.doi);
-    var q2 = encodeURIComponent('doi.org/' + pub.doi);
-    return Promise.all([
-      fetchJSON('https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q='+q1+'&limit=100'),
-      fetchJSON('https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q='+q2+'&limit=100')
-    ]).then(function(res){
-      var uris = {};
-      [res[0], res[1]].forEach(function(r){
-        if (r && r.posts) r.posts.forEach(function(p){ if (p.uri) uris[p.uri] = true; });
-      });
-      pub.bskyCount = Object.keys(uris).length;
-    }).catch(function(){ pub.bskyCount = null; });
+    var doiUrl = encodeURIComponent('https://doi.org/' + pub.doi);
+    return fetchJSON('https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?url='+doiUrl+'&limit=100')
+      .then(function(res){
+        if (res && res.posts) {
+          pub.bskyCount = res.posts.length;
+          // Store post URIs for potential future display
+          pub.bskyPosts = res.posts.map(function(p){ return { uri: p.uri, author: p.author && p.author.handle, text: (p.record && p.record.text) || '', likeCount: p.likeCount||0, repostCount: p.repostCount||0 }; });
+        } else {
+          pub.bskyCount = 0;
+        }
+      }).catch(function(){ pub.bskyCount = null; });
   });
 
   await Promise.all([ojsCSV].concat(oaProms).concat(crProms).concat(bskyProms));
