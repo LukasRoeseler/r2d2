@@ -403,16 +403,14 @@ body {
 .pub-link:hover { border-bottom-color: var(--r2-link); }
 .link-sep { width: 1px; height: 11px; background: var(--border2); display: inline-block; }
 
-/* Donut column */
+/* Altmetric badge column */
 .pub-donut {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding-top: 8px;
+  gap: 5px;
+  padding-top: 6px;
 }
-
-.donut-svg { width: 76px; height: 76px; }
 
 .donut-label {
   font-size: 9px;
@@ -423,11 +421,8 @@ body {
   font-weight: 700;
 }
 
-.donut-detail {
-  font-size: 10px;
-  color: var(--text3);
-  text-align: center;
-}
+/* force badge to fixed size */
+.altmetric-embed { display: block; }
 
 @media (max-width: 780px) {
   .page-body { grid-template-columns: 1fr; gap: 32px; padding: 28px 20px; }
@@ -489,7 +484,7 @@ body {
       <div class="legend-title">Data sources</div>
       <div class="legend-item"><span class="legend-dot" style="background:#e67e22"></span>DataCite</div>
       <div class="legend-item"><span class="legend-dot" style="background:#2ecc71"></span>OpenAlex</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span>Altmetric (donut)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span>Altmetric (badge widget)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#9b59b6"></span>Semantic Scholar</div>
       <div class="legend-item"><span class="legend-dot" style="background:#1abc9c"></span>Unpaywall (OA status)</div>
     </div>
@@ -512,24 +507,7 @@ body {
 </div>
 
 <script>
-const PUBS = [
-  {
-    doi: "10.17879/replicationresearch-2025-9022",
-    title: "A Community Model for Rigorous and Inclusive Scholarship: Inaugural Editorial of Replication Research (R2)",
-    authors: "Röseler, L., Wallrich, L., Adler, S., Oppong Boakye, P., Evans, T. R., Goltermann, J., … Azevedo, F.",
-    year: 2025,
-    volume: 1,
-    type: "Editorial"
-  },
-  {
-    doi: "10.17879/replicationresearch-2026-9577",
-    title: "From Replication Rates to Replication Evidence: A Guest Editorial",
-    authors: "Holzmeister, F., Camerer, C., Cova, F., Dreber, A., & Johannesson, M.",
-    year: 2026,
-    volume: 2,
-    type: "Editorial"
-  }
-];
+const DOIS_URL = 'https://raw.githubusercontent.com/LukasRoeseler/r2_bibliometrics/refs/heads/main/dois.txt';
 
 async function fetchJSON(url, timeout) {
   timeout = timeout || 8000;
@@ -544,48 +522,6 @@ async function fetchJSON(url, timeout) {
 }
 
 function spin() { return '<span class="spinner-sm"></span>'; }
-
-function buildDonut(score, loading) {
-  if (loading) {
-    return '<svg class="donut-svg" viewBox="0 0 76 76">'
-      + '<circle cx="38" cy="38" r="30" fill="none" stroke="#e8e4dc" stroke-width="6"/>'
-      + '<circle cx="38" cy="38" r="30" fill="none" stroke="#ddd8ce" stroke-width="6"'
-      + ' stroke-dasharray="12 7" stroke-linecap="round">'
-      + '<animateTransform attributeName="transform" type="rotate"'
-      + ' from="0 38 38" to="360 38 38" dur="1.3s" repeatCount="indefinite"/>'
-      + '</circle></svg>';
-  }
-  var r = 30, circ = 2 * Math.PI * r;
-  if (score === null || score === undefined) {
-    return '<svg class="donut-svg" viewBox="0 0 76 76">'
-      + '<circle cx="38" cy="38" r="' + r + '" fill="none" stroke="#e8e4dc" stroke-width="6"/>'
-      + '<text x="38" y="42" text-anchor="middle" font-size="10" fill="#aaa" font-family="sans-serif">n/a</text>'
-      + '</svg>';
-  }
-  var capped = Math.min(score, 300);
-  var dash = (capped / 300) * circ;
-  var uid = 'dg_' + score + '_' + Math.random().toString(36).slice(2,6);
-  var colors;
-  if (score < 5) colors = ['#f5cba7','#e67e22'];
-  else if (score < 25) colors = ['#aed6f1','#2980b9'];
-  else if (score < 100) colors = ['#a9dfbf','#27ae60'];
-  else colors = ['#f1948a','#e74c3c'];
-  return '<svg class="donut-svg" viewBox="0 0 76 76">'
-    + '<defs><linearGradient id="' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%">'
-    + '<stop offset="0%" stop-color="' + colors[0] + '"/>'
-    + '<stop offset="100%" stop-color="' + colors[1] + '"/>'
-    + '</linearGradient></defs>'
-    + '<circle cx="38" cy="38" r="' + r + '" fill="none" stroke="#e8e4dc" stroke-width="6"/>'
-    + '<circle cx="38" cy="38" r="' + r + '" fill="none"'
-    + ' stroke="url(#' + uid + ')" stroke-width="6" stroke-linecap="round"'
-    + ' stroke-dasharray="' + dash.toFixed(1) + ' ' + circ.toFixed(1) + '"'
-    + ' transform="rotate(-90 38 38)"/>'
-    + '<text x="38" y="35" text-anchor="middle" font-size="15" font-weight="700"'
-    + ' fill="#1a1916" font-family="Lora,Georgia,serif">' + score + '</text>'
-    + '<text x="38" y="47" text-anchor="middle" font-size="8" fill="#8a8780"'
-    + ' font-family="sans-serif" letter-spacing="0.4">SCORE</text>'
-    + '</svg>';
-}
 
 function buildCard(pub, idx) {
   var doiUrl = 'https://doi.org/' + pub.doi;
@@ -617,10 +553,9 @@ function buildCard(pub, idx) {
     + '<a href="https://www.altmetric.com/details/' + pub.doi + '" target="_blank" class="pub-link">Altmetric ↗</a>'
     + '</div>'
     + '</div>'
-    + '<div class="pub-donut" id="donut-' + idx + '">'
-    + buildDonut(0, true)
+    + '<div class="pub-donut">'
+    + '<div class="altmetric-embed" data-badge-type="donut" data-doi="' + pub.doi + '" data-hide-no-mentions="false" data-badge-popover="right"></div>'
     + '<div class="donut-label">Altmetric</div>'
-    + '<div class="donut-detail" id="donut-detail-' + idx + '">…</div>'
     + '</div>'
     + '</div>';
 }
@@ -632,31 +567,18 @@ function setBadge(id, val) {
   if (v) v.innerHTML = (val !== null && val !== undefined) ? String(val) : '—';
 }
 
-function setDonut(idx, score, alt) {
-  var wrap = document.getElementById('donut-' + idx);
-  if (!wrap) return;
-  var svg = wrap.querySelector('svg');
-  var lbl = wrap.querySelector('.donut-label');
-  var det = wrap.querySelector('.donut-detail');
-  if (svg) svg.outerHTML = buildDonut(score, false);
-  wrap.innerHTML = buildDonut(score, false)
-    + '<div class="donut-label">Altmetric</div>'
-    + '<div class="donut-detail">' + (score !== null ? 'Score: ' + score : 'No data') + '</div>';
-}
 
-async function fetchOnePub(pub, idx) {
-  var dcProm = fetchJSON('https://api.datacite.org/dois/' + pub.doi);
+async function fetchOnePub(pub, idx, dcResult) {
+  var dcProm = dcResult ? Promise.resolve(dcResult) : fetchJSON('https://api.datacite.org/dois/' + pub.doi);
   var oaProm = fetchJSON('https://api.openalex.org/works/https://doi.org/' + pub.doi);
-  var altProm = fetchJSON('https://api.altmetric.com/v1/doi/' + pub.doi);
   var ssProm = fetchJSON('https://api.semanticscholar.org/graph/v1/paper/DOI:' + pub.doi + '?fields=citationCount,influentialCitationCount');
   var upProm = fetchJSON('https://api.unpaywall.org/v2/' + pub.doi + '?email=r2metrics@example.org');
 
-  var settled = await Promise.allSettled([dcProm, oaProm, altProm, ssProm, upProm]);
+  var settled = await Promise.allSettled([dcProm, oaProm, ssProm, upProm]);
   var dc = settled[0].value;
   var oa = settled[1].value;
-  var alt = settled[2].value;
-  var ss = settled[3].value;
-  var up = settled[4].value;
+  var ss = settled[2].value;
+  var up = settled[3].value;
 
   var dcCites = (dc && dc.data && dc.data.attributes && dc.data.attributes.citationCount != null)
     ? dc.data.attributes.citationCount : null;
@@ -667,9 +589,6 @@ async function fetchOnePub(pub, idx) {
 
   var ssCites = (ss && ss.citationCount != null) ? ss.citationCount : null;
   setBadge('b-ss-' + idx, ssCites !== null ? ssCites : '—');
-
-  var altScore = (alt && alt.score) ? Math.round(alt.score) : null;
-  setDonut(idx, altScore, alt);
 
   var isOA = null;
   var oaStatus = null;
@@ -691,7 +610,47 @@ async function fetchOnePub(pub, idx) {
     }
   }
 
-  return { dcCites: dcCites, oaCites: oaCites, ssCites: ssCites, altScore: altScore, isOA: isOA };
+  return { dcCites: dcCites, oaCites: oaCites, ssCites: ssCites, isOA: isOA };
+}
+
+/* Extract trailing number from DOI for sorting */
+function doiSortKey(doi) {
+  var m = doi.match(/(\d+)$/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+/* Parse DataCite attributes into a pub object */
+function dcToPub(doi, attrs) {
+  var title = (attrs.titles && attrs.titles[0] && attrs.titles[0].title) || doi;
+  var year = attrs.publicationYear || '?';
+
+  /* Authors */
+  var creators = attrs.creators || [];
+  var authorList;
+  if (creators.length === 0) {
+    authorList = '';
+  } else if (creators.length <= 5) {
+    authorList = creators.map(function(c) {
+      return c.familyName ? (c.familyName + ', ' + (c.givenName ? c.givenName.charAt(0) + '.' : '')) : (c.name || '');
+    }).join(', ');
+  } else {
+    var first5 = creators.slice(0, 5).map(function(c) {
+      return c.familyName ? (c.familyName + ', ' + (c.givenName ? c.givenName.charAt(0) + '.' : '')) : (c.name || '');
+    }).join(', ');
+    authorList = first5 + ', … ' + (function() {
+      var last = creators[creators.length - 1];
+      return last.familyName ? (last.familyName + ', ' + (last.givenName ? last.givenName.charAt(0) + '.' : '')) : (last.name || '');
+    })();
+  }
+
+  /* Volume from container or year */
+  var volume = (attrs.container && attrs.container.volume) ? attrs.container.volume : year;
+
+  /* Type */
+  var rawType = (attrs.types && (attrs.types.resourceTypeGeneral || attrs.types.resourceType)) || 'Article';
+  var type = rawType.charAt(0).toUpperCase() + rawType.slice(1).toLowerCase();
+
+  return { doi: doi, title: title, authors: authorList, year: year, volume: volume, type: type };
 }
 
 async function loadAll() {
@@ -700,32 +659,80 @@ async function loadAll() {
   btn.textContent = '… Loading';
 
   document.getElementById('status-dot').className = 'status-dot loading';
-  document.getElementById('status-text').textContent = 'Fetching from DataCite, Altmetric, OpenAlex, Semantic Scholar, Unpaywall…';
-  document.getElementById('section-count').textContent = PUBS.length + ' publication' + (PUBS.length !== 1 ? 's' : '');
-  document.getElementById('sum-pubs').textContent = PUBS.length;
+  document.getElementById('status-text').textContent = 'Loading DOI list from GitHub…';
+  document.getElementById('pub-list').innerHTML = '';
 
+  /* 1 — Fetch DOI list */
+  var doiText = null;
+  try {
+    var res = await fetch(DOIS_URL + '?nocache=' + Date.now());
+    if (res.ok) doiText = await res.text();
+  } catch(e) {}
+
+  if (!doiText) {
+    document.getElementById('status-dot').className = 'status-dot error';
+    document.getElementById('status-text').textContent = 'Could not load ' + DOIS_URL;
+    btn.disabled = false; btn.textContent = '↺ Refresh metrics';
+    return;
+  }
+
+  /* 2 — Parse & sort DOIs (descending by trailing number = newest first) */
+  var rawDois = doiText.split('\n')
+    .map(function(l) { return l.trim().replace(/^https?:\/\/doi\.org\//i, ''); })
+    .filter(function(l) { return l.length > 0; });
+
+  rawDois.sort(function(a, b) { return doiSortKey(b) - doiSortKey(a); });
+
+  document.getElementById('status-dot').className = 'status-dot loading';
+  document.getElementById('status-text').textContent = 'Fetching metadata for ' + rawDois.length + ' publication' + (rawDois.length !== 1 ? 's' : '') + ' from DataCite…';
+  document.getElementById('section-count').textContent = rawDois.length + ' publication' + (rawDois.length !== 1 ? 's' : '');
+  document.getElementById('sum-pubs').textContent = rawDois.length;
+
+  /* 3 — Fetch DataCite metadata for all DOIs in parallel */
+  var metaResults = await Promise.all(rawDois.map(function(doi) {
+    return fetchJSON('https://api.datacite.org/dois/' + encodeURIComponent(doi));
+  }));
+
+  /* 4 — Build pub objects (fallback if DataCite has no record yet) */
+  var PUBS = rawDois.map(function(doi, i) {
+    var dc = metaResults[i];
+    if (dc && dc.data && dc.data.attributes) {
+      return dcToPub(doi, dc.data.attributes);
+    }
+    return { doi: doi, title: doi, authors: '', year: '?', volume: '?', type: 'Article' };
+  });
+
+  /* 5 — Render cards */
   var list = document.getElementById('pub-list');
   list.innerHTML = PUBS.map(function(p, i) { return buildCard(p, i); }).join('');
 
-  var results = await Promise.all(PUBS.map(function(p, i) { return fetchOnePub(p, i); }));
+  /* 6 — Re-initialise Altmetric embed for dynamically added badges */
+  if (window._altmetric_embed_init) {
+    window._altmetric_embed_init();
+  } else if (window.altmetric_embed) {
+    window.altmetric_embed.init();
+  }
 
+  /* 7 — Fetch remaining metrics (OpenAlex, Semantic Scholar, Unpaywall) */
+  document.getElementById('status-text').textContent = 'Fetching citation & OA metrics…';
+  var results = await Promise.all(PUBS.map(function(p, i) { return fetchOnePub(p, i, metaResults[i]); }));
+
+  /* 8 — Summary stats */
   var totalCites = results.reduce(function(s, r) {
     return s + (r.dcCites !== null ? r.dcCites : (r.oaCites !== null ? r.oaCites : 0));
   }, 0);
   document.getElementById('sum-cites').textContent = totalCites;
-
-  var scores = results.map(function(r) { return r.altScore; }).filter(function(x) { return x !== null; });
-  document.getElementById('sum-altm').textContent = scores.length
-    ? Math.round(scores.reduce(function(a,b){return a+b;},0) / scores.length) : '—';
+  document.getElementById('sum-altm').textContent = 'see badge';
 
   var oaCount = results.filter(function(r) { return r.isOA === true; }).length;
-  document.getElementById('sum-oa').textContent = Math.round(oaCount / PUBS.length * 100) + '%';
+  document.getElementById('sum-oa').textContent = PUBS.length
+    ? Math.round(oaCount / PUBS.length * 100) + '%' : '—';
 
   document.getElementById('status-dot').className = 'status-dot done';
   var now = new Date();
   var timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   document.getElementById('status-text').textContent =
-    'Metrics loaded · ' + timeStr + ' · Sources: DataCite · OpenAlex · Altmetric · Semantic Scholar · Unpaywall';
+    'Metrics loaded · ' + timeStr + ' · Sources: DataCite · OpenAlex · Semantic Scholar · Unpaywall · Altmetric (badge)';
 
   btn.disabled = false;
   btn.textContent = '↺ Refresh metrics';
@@ -733,5 +740,6 @@ async function loadAll() {
 
 loadAll();
 </script>
+<script type="text/javascript" src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"></script>
 </body>
 </html>
