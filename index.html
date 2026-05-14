@@ -12,7 +12,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --r2-blue: #1e8bc3;          /* primary blue from R2 logo */
+  --r2-blue: #1e8bc3;
   --r2-blue-dark: #1a6fa8;
   --r2-blue-light: #e6f3fa;
   --r2-blue-border: #b8dcef;
@@ -24,7 +24,7 @@
 
   --border: #e3e7eb;
   --border-mid: #c5cdd5;
-  --border-blue: #1e8bc3;       /* for separator lines like in articles */
+  --border-blue: #1e8bc3;
 
   --text: #1a1d20;
   --text-secondary: #4a5158;
@@ -41,6 +41,10 @@
   --amber: #b45309;
   --amber-bg: #fef3c7;
   --amber-border: #fcd34d;
+
+  --zenodo-orange: #024d94;
+  --zenodo-light: #e8f1fb;
+  --zenodo-border: #a8c8f0;
 
   --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -59,9 +63,7 @@ body {
 }
 .site-header .logo-link { display: inline-block; line-height: 0; }
 .header-logo { height: 50px; object-fit: contain; display: block; }
-.header-brand {
-  font-size: 13px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.02em;
-}
+.header-brand { font-size: 13px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.02em; }
 .header-brand b { color: var(--r2-blue-deep); font-weight: 700; }
 
 /* ── PAGE LAYOUT ── */
@@ -126,11 +128,32 @@ body {
 }
 .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
+/* ── TABS ── */
+.tabs-bar {
+  display: flex; gap: 0; margin-bottom: 0;
+  border-bottom: 2px solid var(--r2-blue);
+}
+.tab-btn {
+  padding: 10px 24px; font-size: 14px; font-weight: 600; font-family: var(--font);
+  border: none; border-bottom: none; background: var(--bg-soft); color: var(--text-secondary);
+  cursor: pointer; letter-spacing: -0.01em; border-radius: 6px 6px 0 0;
+  border: 1.5px solid var(--border); border-bottom: none;
+  margin-bottom: -2px; position: relative; transition: all 0.15s;
+}
+.tab-btn + .tab-btn { margin-left: 4px; }
+.tab-btn.active {
+  background: var(--bg); color: var(--r2-blue); border-color: var(--r2-blue);
+  border-bottom: 2px solid var(--bg); z-index: 1;
+}
+.tab-btn:not(.active):hover { background: var(--bg); color: var(--text); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
 /* ── SECTION HEADER + SORT ── */
 .section-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding-bottom: 12px; border-bottom: 2px solid var(--r2-blue);
-  flex-wrap: wrap; gap: 8px;
+  padding: 16px 0 12px; flex-wrap: wrap; gap: 8px;
 }
 .section-title { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
 
@@ -156,20 +179,17 @@ body {
 .status-dot.error { background: #dc2626; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-/* ── LOADER (full main panel while initial fetch is in progress) ── */
+/* ── LOADER ── */
 .loader-wrap {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 60px 20px 40px; min-height: 280px; gap: 28px;
 }
 .loader-wrap.hidden { display: none; }
 
-.loader-orbit {
-  position: relative; width: 88px; height: 88px;
-}
+.loader-orbit { position: relative; width: 88px; height: 88px; }
 .loader-orbit::before {
   content: ''; position: absolute; inset: 0;
-  border-radius: 50%;
-  border: 2px solid var(--border);
+  border-radius: 50%; border: 2px solid var(--border);
 }
 .loader-orbit .orbit-dot {
   position: absolute; top: -5px; left: 50%; margin-left: -5px;
@@ -182,10 +202,7 @@ body {
 .loader-orbit .orbit-dot:nth-child(2) { background: #2ecc71; animation-delay: -0.4s; opacity: 0.85; }
 .loader-orbit .orbit-dot:nth-child(3) { background: #e67e22; animation-delay: -0.8s; opacity: 0.75; }
 .loader-orbit .orbit-dot:nth-child(4) { background: #e74c3c; animation-delay: -1.2s; opacity: 0.6; }
-@keyframes orbitSpin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
+@keyframes orbitSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 .loader-center {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -194,9 +211,7 @@ body {
 }
 @keyframes pulseText { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 
-.loader-steps {
-  display: flex; flex-direction: column; gap: 8px; max-width: 340px; width: 100%;
-}
+.loader-steps { display: flex; flex-direction: column; gap: 8px; max-width: 340px; width: 100%; }
 .loader-step {
   display: flex; align-items: center; gap: 10px;
   font-size: 12px; color: var(--text-muted);
@@ -207,33 +222,17 @@ body {
   width: 8px; height: 8px; border-radius: 50%; background: var(--border-mid); flex-shrink: 0;
   transition: all 0.3s;
 }
-.loader-step.active {
-  border-color: var(--r2-blue); background: var(--r2-blue-light); color: var(--r2-blue-deep); font-weight: 600;
-}
-.loader-step.active .step-dot {
-  background: var(--r2-blue); animation: pulseDot 1s ease-in-out infinite;
-  box-shadow: 0 0 0 0 rgba(30,139,195,0.5);
-}
-.loader-step.done {
-  color: var(--green); border-color: var(--green-border); background: var(--green-bg);
-}
+.loader-step.active { border-color: var(--r2-blue); background: var(--r2-blue-light); color: var(--r2-blue-deep); font-weight: 600; }
+.loader-step.active .step-dot { background: var(--r2-blue); animation: pulseDot 1s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(30,139,195,0.5); }
+.loader-step.done { color: var(--green); border-color: var(--green-border); background: var(--green-bg); }
 .loader-step.done .step-dot { background: var(--green); }
-.loader-step.done .step-dot::after {
-  content: ''; position: relative;
-}
 @keyframes pulseDot {
   0%, 100% { box-shadow: 0 0 0 0 rgba(30,139,195,0.5); }
   50%      { box-shadow: 0 0 0 6px rgba(30,139,195,0); }
 }
 
-.loader-progress {
-  width: 100%; max-width: 340px; height: 3px;
-  background: var(--border); border-radius: 2px; overflow: hidden;
-}
-.loader-progress-bar {
-  height: 100%; background: linear-gradient(90deg, var(--r2-blue), #2ecc71);
-  width: 0%; transition: width 0.5s ease-out;
-}
+.loader-progress { width: 100%; max-width: 340px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.loader-progress-bar { height: 100%; background: linear-gradient(90deg, var(--r2-blue), #2ecc71); width: 0%; transition: width 0.5s ease-out; }
 
 /* ── PUB CARD ── */
 .pub-item {
@@ -243,18 +242,13 @@ body {
 }
 @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
 
-/* Top meta row: section · category · type · date */
-.pub-top-meta {
-  display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 10px;
-}
-.tag {
-  font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 4px;
-  letter-spacing: 0.02em;
-}
+.pub-top-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 10px; }
+.tag { font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 4px; letter-spacing: 0.02em; }
 .tag-section  { background: var(--r2-blue-light); color: var(--r2-blue-deep); border: 1px solid var(--r2-blue-border); }
 .tag-category { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
 .tag-type     { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
 .tag-date     { background: var(--bg-chip); color: var(--text-secondary); border: 1px solid var(--border); font-family: var(--font-mono); font-size: 10px; }
+.tag-zenodo   { background: var(--zenodo-light); color: var(--zenodo-orange); border: 1px solid var(--zenodo-border); }
 
 .pub-title {
   font-size: 19px; font-weight: 700; line-height: 1.3;
@@ -262,35 +256,20 @@ body {
   margin-bottom: 4px; letter-spacing: -0.015em; transition: color 0.15s;
 }
 .pub-title:hover { color: var(--r2-blue); }
-.pub-subtitle {
-  font-size: 15px; font-weight: 400; color: var(--text-secondary);
-  line-height: 1.35; margin-bottom: 10px;
-}
-.pub-authors {
-  font-size: 13px; color: var(--text-secondary); font-weight: 400;
-  margin-bottom: 14px; line-height: 1.5;
-}
-.author-link {
-  display: inline-flex; align-items: center; gap: 3px;
-  color: var(--text-secondary); text-decoration: none;
-  white-space: nowrap;
-}
+.pub-subtitle { font-size: 15px; font-weight: 400; color: var(--text-secondary); line-height: 1.35; margin-bottom: 10px; }
+.pub-authors { font-size: 13px; color: var(--text-secondary); font-weight: 400; margin-bottom: 14px; line-height: 1.5; }
+.author-link { display: inline-flex; align-items: center; gap: 3px; color: var(--text-secondary); text-decoration: none; white-space: nowrap; }
 a.author-link:hover { color: var(--r2-blue); }
 a.author-link:hover .orcid-icon { transform: scale(1.15); }
-.orcid-icon {
-  width: 11px; height: 11px; vertical-align: -1px;
-  transition: transform 0.15s;
-}
+.orcid-icon { width: 11px; height: 11px; vertical-align: -1px; transition: transform 0.15s; }
 
 .mbadge.mbadge-link { cursor: pointer; transition: all 0.15s; text-decoration: none; }
 .mbadge.mbadge-link:hover { border-color: var(--r2-blue); background: var(--r2-blue-light); color: var(--r2-blue-deep); }
 
 /* ── SITE FOOTER ── */
 .site-footer {
-  border-top: 1px solid var(--border);
-  padding: 20px 48px;
-  display: flex; align-items: center; gap: 10px;
-  flex-wrap: wrap;
+  border-top: 1px solid var(--border); padding: 20px 48px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   font-size: 11.5px; color: var(--text-muted);
   max-width: 1180px; margin: 0 auto;
 }
@@ -300,9 +279,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 .site-footer strong { color: var(--text-secondary); font-weight: 600; }
 
 /* ── ACTION BUTTONS ── */
-.pub-actions {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
-}
+.pub-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .action-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 6px 13px; border-radius: 5px; font-size: 12px; font-weight: 600;
@@ -310,23 +287,15 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
   border: 1.5px solid transparent;
 }
 .action-btn svg { width: 13px; height: 13px; }
-.action-btn-primary {
-  background: var(--r2-blue); color: #fff; border-color: var(--r2-blue);
-}
+.action-btn-primary { background: var(--r2-blue); color: #fff; border-color: var(--r2-blue); }
 .action-btn-primary:hover { background: var(--r2-blue-dark); border-color: var(--r2-blue-dark); }
-.action-btn-secondary {
-  background: var(--bg); color: var(--r2-blue); border-color: var(--r2-blue);
-}
+.action-btn-secondary { background: var(--bg); color: var(--r2-blue); border-color: var(--r2-blue); }
 .action-btn-secondary:hover { background: var(--r2-blue-light); }
 
 /* ── METRICS BLOCK ── */
 .metrics-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
-
 .metric-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.metric-group-label {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.08em; color: var(--text-muted); margin-right: 3px;
-}
+.metric-group-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-right: 3px; }
 
 .mbadge {
   display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
@@ -335,10 +304,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
   background: var(--bg); white-space: nowrap;
 }
 .mbadge .src-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.mbadge .val {
-  font-size: 12px; font-weight: 700; color: var(--text); margin-left: 2px;
-  font-variant-numeric: tabular-nums;
-}
+.mbadge .val { font-size: 12px; font-weight: 700; color: var(--text); margin-left: 2px; font-variant-numeric: tabular-nums; }
 
 .view-chip {
   display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
@@ -350,43 +316,15 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 
 /* ── SPARKLINES ── */
 .sparkline-wrap { margin-top: 4px; }
-.sparkline-title {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 4px;
-}
+.sparkline-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 4px; }
 .sparkline-svg { display: block; width: 100%; max-width: 440px; height: 40px; }
-
-/* Animation: line draws from left to right */
-.spark-line {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  animation: drawLine 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
+.spark-line { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: drawLine 1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 @keyframes drawLine { to { stroke-dashoffset: 0; } }
-
-/* Animation: area fill grows left-to-right via clipPath */
-.spark-area-mask {
-  transform-origin: left center;
-  animation: growArea 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  transform: scaleX(0);
-}
+.spark-area-mask { transform-origin: left center; animation: growArea 1s cubic-bezier(0.4, 0, 0.2, 1) forwards; transform: scaleX(0); }
 @keyframes growArea { to { transform: scaleX(1); } }
-
-/* Animation: dots pop in sequentially */
-.spark-dot {
-  opacity: 0;
-  transform-origin: center;
-  animation: popDot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-@keyframes popDot {
-  0%   { opacity: 0; transform: scale(0); }
-  100% { opacity: 1; transform: scale(1); }
-}
-.sparkline-axis {
-  font-size: 9.5px; color: var(--text-muted); display: flex;
-  justify-content: space-between; max-width: 440px; margin-top: 2px;
-  font-variant-numeric: tabular-nums;
-}
+.spark-dot { opacity: 0; transform-origin: center; animation: popDot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+@keyframes popDot { 0%{opacity:0;transform:scale(0)} 100%{opacity:1;transform:scale(1)} }
+.sparkline-axis { font-size: 9.5px; color: var(--text-muted); display: flex; justify-content: space-between; max-width: 440px; margin-top: 2px; font-variant-numeric: tabular-nums; }
 
 /* ── FOOTER LINKS ── */
 .pub-footer {
@@ -396,9 +334,8 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 .doi-chip {
   font-size: 11px; color: var(--r2-blue); text-decoration: none;
   font-family: var(--font); font-weight: 500;
-  background: var(--r2-blue-light);
-  border: 1px solid var(--r2-blue-border); padding: 3px 9px; border-radius: 4px;
-  transition: background 0.15s;
+  background: var(--r2-blue-light); border: 1px solid var(--r2-blue-border);
+  padding: 3px 9px; border-radius: 4px; transition: background 0.15s;
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .doi-chip:hover { background: #d6ebf6; }
@@ -408,21 +345,13 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
   background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border);
 }
 
-.pub-link {
-  font-size: 11px; color: var(--r2-blue); text-decoration: none;
-  border-bottom: 1px solid transparent; font-weight: 600; transition: border-color 0.15s;
-}
+.pub-link { font-size: 11px; color: var(--r2-blue); text-decoration: none; border-bottom: 1px solid transparent; font-weight: 600; transition: border-color 0.15s; }
 .pub-link:hover { border-bottom-color: var(--r2-blue); }
 .link-sep { width: 1px; height: 11px; background: var(--border-mid); display: inline-block; }
 
 /* ── ALTMETRIC DONUT COLUMN ── */
-.pub-donut {
-  display: flex; flex-direction: column; align-items: center; gap: 5px; padding-top: 4px;
-}
-.donut-label {
-  font-size: 9px; color: var(--text-muted); text-align: center;
-  letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
-}
+.pub-donut { display: flex; flex-direction: column; align-items: center; gap: 5px; padding-top: 4px; }
+.donut-label { font-size: 9px; color: var(--text-muted); text-align: center; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
 
 /* ── SPINNER ── */
 .spinner-sm {
@@ -431,6 +360,22 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
   border-radius: 50%; animation: spin 0.65s linear infinite; vertical-align: middle;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── ZENODO COMMUNITY PANEL ── */
+.zenodo-intro {
+  background: var(--zenodo-light); border: 1px solid var(--zenodo-border);
+  border-radius: 8px; padding: 14px 18px; margin-bottom: 20px;
+  font-size: 12.5px; color: var(--text-secondary); line-height: 1.55;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.zenodo-intro a { color: var(--zenodo-orange); font-weight: 600; }
+.zenodo-intro svg { flex-shrink: 0; margin-top: 2px; }
+
+/* ── ZENODO COMMUNITY SUMMARY SPARKLINE ── */
+.zenodo-summary-spark {
+  margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border);
+}
+.zenodo-summary-spark .sparkline-title { margin-bottom: 6px; }
 
 @media (max-width: 780px) {
   .page-body { grid-template-columns: 1fr; gap: 28px; padding: 26px 18px; }
@@ -452,72 +397,140 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 </header>
 
 <div class="page-body">
-  <aside class="page-sidebar">
+  <aside class="page-sidebar" id="sidebar-ojs">
     <h1 class="page-heading">R2D2<span class="accent">.</span></h1>
     <p class="page-sub">Dissemination Dashboard — bibliometrics, altmetrics &amp; OJS usage statistics for all publications in Replication Research.</p>
 
-    <div class="stat-row"><span class="stat-label">Publications</span><span class="stat-value" id="sum-pubs">—</span></div>
-    <div class="stat-row"><span class="stat-label">Total citations</span><span class="stat-value" id="sum-cites">—</span></div>
-    <div class="stat-row"><span class="stat-label">Abstract views</span><span class="stat-value" id="sum-views">—</span></div>
-    <div class="stat-row"><span class="stat-label">PDF downloads</span><span class="stat-value" id="sum-pdfs">—</span></div>
-    <div class="stat-row"><span class="stat-label">Open Access</span><span class="stat-value" id="sum-oa">—</span></div>
+    <div id="sidebar-ojs-stats">
+      <div class="stat-row"><span class="stat-label">Publications</span><span class="stat-value" id="sum-pubs">—</span></div>
+      <div class="stat-row"><span class="stat-label">Total citations</span><span class="stat-value" id="sum-cites">—</span></div>
+      <div class="stat-row"><span class="stat-label">Abstract views</span><span class="stat-value" id="sum-views">—</span></div>
+      <div class="stat-row"><span class="stat-label">PDF downloads</span><span class="stat-value" id="sum-pdfs">—</span></div>
+      <div class="stat-row"><span class="stat-label">Open Access</span><span class="stat-value" id="sum-oa">—</span></div>
+    </div>
+
+    <div id="sidebar-zenodo-stats" style="display:none">
+      <div class="stat-row"><span class="stat-label">Research items</span><span class="stat-value" id="z-sum-items">—</span></div>
+      <div class="stat-row"><span class="stat-label">Total views</span><span class="stat-value" id="z-sum-views">—</span></div>
+      <div class="stat-row"><span class="stat-label">Total downloads</span><span class="stat-value" id="z-sum-downloads">—</span></div>
+      <div class="stat-row"><span class="stat-label">Total citations</span><span class="stat-value" id="z-sum-cites">—</span></div>
+      <div class="stat-row"><span class="stat-label">Open Access</span><span class="stat-value" id="z-sum-oa">—</span></div>
+      <div class="zenodo-summary-spark">
+        <div class="sparkline-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:4px">Community views by month</div>
+        <div id="z-community-spark"></div>
+      </div>
+    </div>
 
     <div class="ojs-note" id="ojs-note">OJS stats: loading…</div>
+    <button class="refresh-btn" id="refresh-btn" onclick="handleRefresh()">↺ Refresh</button>
 
-    <button class="refresh-btn" id="refresh-btn" onclick="loadAll()">↺ Refresh</button>
-
-    <div class="source-legend">
+    <div class="source-legend" id="legend-ojs">
       <div class="legend-title">Data sources</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#1e8bc3"></span>OJS REST API (metadata, sections)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#1e8bc3"></span>OJS REST API (metadata)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#2ecc71"></span>OpenAlex (citations, sparkline)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#e67e22"></span>DataCite (citations)</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span>Crossref (citations)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#3498db"></span>OJS stats CSV (views/downloads)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#1185fe"></span>Bluesky (social mentions)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#9b59b6"></span>Altmetric (badge)</div>
+    </div>
+
+    <div class="source-legend" id="legend-zenodo" style="display:none">
+      <div class="legend-title">Data sources</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#024d94"></span>Zenodo REST API (metadata, stats)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#2ecc71"></span>OpenAlex (citations)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e67e22"></span>DataCite (citations)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#1185fe"></span>Bluesky (social mentions)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#9b59b6"></span>Altmetric (badge)</div>
     </div>
   </aside>
 
   <main>
-    <div class="section-header">
-      <h2 class="section-title">All publications</h2>
-      <div class="sort-row">
-        <span class="sort-label">Sort:</span>
-        <button class="sort-btn active" id="sort-newest" onclick="setSort('newest')">Newest</button>
-        <button class="sort-btn" id="sort-oldest" onclick="setSort('oldest')">Oldest</button>
-        <button class="sort-btn" id="sort-cites" onclick="setSort('cites')">Most cited</button>
-        <button class="sort-btn" id="sort-views" onclick="setSort('views')">Most viewed</button>
-      </div>
+    <!-- TABS -->
+    <div class="tabs-bar">
+      <button class="tab-btn active" id="tab-ojs" onclick="switchTab('ojs')">Published Articles</button>
+      <button class="tab-btn" id="tab-zenodo" onclick="switchTab('zenodo')">Zenodo Community</button>
     </div>
 
-    <div class="status-bar">
-      <span class="status-dot loading" id="status-dot"></span>
-      <span id="status-text">Loading…</span>
+    <!-- ── TAB: PUBLISHED ARTICLES ── -->
+    <div class="tab-panel active" id="panel-ojs">
+      <div class="section-header">
+        <h2 class="section-title">All publications</h2>
+        <div class="sort-row">
+          <span class="sort-label">Sort:</span>
+          <button class="sort-btn active" id="sort-newest" onclick="setSort('newest')">Newest</button>
+          <button class="sort-btn" id="sort-oldest" onclick="setSort('oldest')">Oldest</button>
+          <button class="sort-btn" id="sort-cites" onclick="setSort('cites')">Most cited</button>
+          <button class="sort-btn" id="sort-views" onclick="setSort('views')">Most viewed</button>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <span class="status-dot loading" id="status-dot"></span>
+        <span id="status-text">Loading…</span>
+      </div>
+
+      <div class="loader-wrap" id="loader-wrap">
+        <div class="loader-orbit">
+          <div class="orbit-dot"></div><div class="orbit-dot"></div>
+          <div class="orbit-dot"></div><div class="orbit-dot"></div>
+          <div class="loader-center">R2D2</div>
+        </div>
+        <div class="loader-steps" id="loader-steps">
+          <div class="loader-step" data-step="dois"><span class="step-dot"></span>Reading DOI list from GitHub</div>
+          <div class="loader-step" data-step="meta"><span class="step-dot"></span>Fetching article metadata from OJS</div>
+          <div class="loader-step" data-step="cites"><span class="step-dot"></span>Loading citations (OpenAlex, DataCite)</div>
+          <div class="loader-step" data-step="ojs"><span class="step-dot"></span>Loading OJS usage statistics</div>
+        </div>
+        <div class="loader-progress"><div class="loader-progress-bar" id="loader-progress-bar"></div></div>
+      </div>
+
+      <div id="pub-list"></div>
     </div>
 
-    <div class="loader-wrap" id="loader-wrap">
-      <div class="loader-orbit">
-        <div class="orbit-dot"></div>
-        <div class="orbit-dot"></div>
-        <div class="orbit-dot"></div>
-        <div class="orbit-dot"></div>
-        <div class="loader-center">R2D2</div>
+    <!-- ── TAB: ZENODO COMMUNITY ── -->
+    <div class="tab-panel" id="panel-zenodo">
+      <div class="section-header">
+        <h2 class="section-title">Zenodo Community: r2</h2>
+        <div class="sort-row">
+          <span class="sort-label">Sort:</span>
+          <button class="sort-btn active" id="zsort-newest" onclick="setZSort('newest')">Newest</button>
+          <button class="sort-btn" id="zsort-oldest" onclick="setZSort('oldest')">Oldest</button>
+          <button class="sort-btn" id="zsort-views" onclick="setZSort('views')">Most viewed</button>
+          <button class="sort-btn" id="zsort-downloads" onclick="setZSort('downloads')">Most downloaded</button>
+        </div>
       </div>
-      <div class="loader-steps" id="loader-steps">
-        <div class="loader-step" data-step="dois"><span class="step-dot"></span>Reading DOI list from GitHub</div>
-        <div class="loader-step" data-step="meta"><span class="step-dot"></span>Fetching article metadata from OJS</div>
-        <div class="loader-step" data-step="cites"><span class="step-dot"></span>Loading citations (OpenAlex, DataCite, Crossref)</div>
-        <div class="loader-step" data-step="ojs"><span class="step-dot"></span>Loading OJS usage statistics</div>
-      </div>
-      <div class="loader-progress"><div class="loader-progress-bar" id="loader-progress-bar"></div></div>
-    </div>
 
-    <div id="pub-list"></div>
+      <div class="zenodo-intro">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#024d94" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <div>Records from the <a href="https://zenodo.org/communities/r2/records" target="_blank">Zenodo r2 community ↗</a>. Stats (views, downloads) are fetched live from the Zenodo API. Citations are enriched from OpenAlex and DataCite.</div>
+      </div>
+
+      <div class="status-bar">
+        <span class="status-dot loading" id="z-status-dot"></span>
+        <span id="z-status-text">Loading Zenodo community…</span>
+      </div>
+
+      <div class="loader-wrap" id="z-loader-wrap">
+        <div class="loader-orbit">
+          <div class="orbit-dot"></div><div class="orbit-dot"></div>
+          <div class="orbit-dot"></div><div class="orbit-dot"></div>
+          <div class="loader-center" style="color:#024d94">r2</div>
+        </div>
+        <div class="loader-steps">
+          <div class="loader-step" data-zstep="fetch"><span class="step-dot"></span>Fetching Zenodo community records</div>
+          <div class="loader-step" data-zstep="stats"><span class="step-dot"></span>Loading per-record stats &amp; metadata</div>
+          <div class="loader-step" data-zstep="enrich"><span class="step-dot"></span>Enriching with OpenAlex, DataCite &amp; Bluesky</div>
+        </div>
+        <div class="loader-progress"><div class="loader-progress-bar" id="z-loader-progress-bar"></div></div>
+      </div>
+
+      <div id="zenodo-list"></div>
+    </div>
   </main>
 </div>
 
 <footer class="site-footer">
-  <span>Replication Research Dissemination Dashboard <strong>v0.1</strong></span>
+  <span>Replication Research Dissemination Dashboard <strong>v0.2</strong></span>
   <span class="footer-sep">·</span>
   <span><a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></span>
   <span class="footer-sep">·</span>
@@ -533,6 +546,8 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 var DOIS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/dois.txt';
 var STATS_DIR = 'https://api.github.com/repos/LukasRoeseler/r2d2/contents/statistics';
 var OJS_BASE  = 'https://ejournals.uni-muenster.de/index.php/replicationresearch/api/v1';
+var ZENODO_COMMUNITY = 'r2';
+var ZENODO_API = 'https://zenodo.org/api';
 
 /* ============================================
    STATE
@@ -540,9 +555,15 @@ var OJS_BASE  = 'https://ejournals.uni-muenster.de/index.php/replicationresearch
 var ALL_PUBS = [];
 var OJS_DATA = {};
 var OJS_FILE_DATE = null;
-var SECTIONS = {};   // id → name
-var CATEGORIES = {}; // id → name
+var SECTIONS = {};
+var CATEGORIES = {};
 var currentSort = 'newest';
+
+var ALL_ZENODO = [];
+var ZENODO_LOADED = false;
+var currentZSort = 'newest';
+
+var ACTIVE_TAB = 'ojs';
 
 /* ============================================
    UTILITIES
@@ -562,7 +583,7 @@ async function fetchJSON(url, timeout){
     clearTimeout(t);
     if (!r.ok) return null;
     return await r.json();
-  } catch(e){ return null; }
+  } catch(e){ clearTimeout(t); return null; }
 }
 
 async function fetchText(url, timeout){
@@ -574,7 +595,7 @@ async function fetchText(url, timeout){
     clearTimeout(t);
     if (!r.ok) return null;
     return await r.text();
-  } catch(e){ return null; }
+  } catch(e){ clearTimeout(t); return null; }
 }
 
 function doiSortKey(doi){ var m = doi.match(/(\d+)$/); return m ? parseInt(m[1],10) : 0; }
@@ -588,10 +609,36 @@ function fmtDate(iso){
 }
 
 /* ============================================
+   TAB SWITCHING
+============================================ */
+function switchTab(tab){
+  ACTIVE_TAB = tab;
+  document.getElementById('tab-ojs').classList.toggle('active', tab==='ojs');
+  document.getElementById('tab-zenodo').classList.toggle('active', tab==='zenodo');
+  document.getElementById('panel-ojs').classList.toggle('active', tab==='ojs');
+  document.getElementById('panel-zenodo').classList.toggle('active', tab==='zenodo');
+
+  // Sidebar stats
+  document.getElementById('sidebar-ojs-stats').style.display = tab==='ojs' ? '' : 'none';
+  document.getElementById('sidebar-zenodo-stats').style.display = tab==='zenodo' ? '' : 'none';
+  document.getElementById('legend-ojs').style.display = tab==='ojs' ? '' : 'none';
+  document.getElementById('legend-zenodo').style.display = tab==='zenodo' ? '' : 'none';
+  document.getElementById('ojs-note').style.display = tab==='ojs' ? '' : 'none';
+
+  if (tab==='zenodo' && !ZENODO_LOADED) {
+    loadZenodo();
+  }
+}
+
+function handleRefresh(){
+  if (ACTIVE_TAB === 'ojs') loadAll();
+  else loadZenodo();
+}
+
+/* ============================================
    OJS METADATA (REST API)
 ============================================ */
 async function loadSectionsAndCategories(){
-  // Sections
   var s = await fetchJSON(OJS_BASE + '/sections?count=100');
   if (s && s.items) {
     s.items.forEach(function(sec){
@@ -599,7 +646,6 @@ async function loadSectionsAndCategories(){
       if (title) SECTIONS[sec.id] = title;
     });
   }
-  // Categories
   var c = await fetchJSON(OJS_BASE + '/categories?count=100');
   if (c && c.items) {
     c.items.forEach(function(cat){
@@ -615,14 +661,12 @@ async function loadOJSSubmission(ojsId){
 }
 
 function pickOJSPub(sub){
-  // Pick the current publication (currentPublicationId match)
   if (!sub || !sub.publications) return null;
   var current = sub.publications.find(function(p){ return p.id === sub.currentPublicationId; });
   return current || sub.publications[0];
 }
 
 function pickPDFGalleyURL(sub){
-  // Build PDF viewer URL: https://ejournals.uni-muenster.de/index.php/replicationresearch/article/view/{submissionId}/{galleyId}
   var pub = pickOJSPub(sub);
   if (!pub || !pub.galleys) return null;
   var pdf = pub.galleys.find(function(g){ return g.file && g.file.mimetype === 'application/pdf'; });
@@ -631,7 +675,6 @@ function pickPDFGalleyURL(sub){
 }
 
 function pickPDFDirectDownloadURL(sub){
-  // Direct PDF download: .../article/download/{submissionId}/{galleyId}
   var pub = pickOJSPub(sub);
   if (!pub || !pub.galleys) return null;
   var pdf = pub.galleys.find(function(g){ return g.file && g.file.mimetype === 'application/pdf'; });
@@ -648,7 +691,6 @@ function getOJSMeta(sub){
   var datePub  = pub.datePublished || null;
   var authors  = pub.authorsString || '';
 
-  // Build authorsList with names + ORCIDs (from individual author records if present)
   var authorsList = [];
   if (Array.isArray(pub.authors)) {
     authorsList = pub.authors.map(function(a){
@@ -674,7 +716,7 @@ function getOJSMeta(sub){
 }
 
 /* ============================================
-   OJS CSV PARSING (for views/downloads)
+   OJS CSV PARSING
 ============================================ */
 function parseOJS(csv){
   var lines = csv.split('\n');
@@ -683,8 +725,6 @@ function parseOJS(csv){
     if (lines[i].indexOf(',ID,')!==-1 || lines[i].indexOf('"ID"')!==-1){ dataStart=i+1; break; }
   }
   var byId = {}; var titleToId = {};
-
-  // Pass 1: Article rows
   for (var i=dataStart;i<lines.length;i++){
     var line = lines[i].trim(); if (!line) continue;
     var cols = parseCSVLine(line); if (cols.length<14) continue;
@@ -699,8 +739,6 @@ function parseOJS(csv){
     var key = normTitle(title);
     if (key) titleToId[key] = id;
   }
-
-  // Pass 2: PDF rows → match by parent Article column (col5)
   for (var i=dataStart;i<lines.length;i++){
     var line = lines[i].trim(); if (!line) continue;
     var cols = parseCSVLine(line); if (cols.length<14) continue;
@@ -756,15 +794,11 @@ function buildSparkline(countsByYear, color, label){
     return x.toFixed(1)+','+y.toFixed(1);
   }).join(' ');
   var areaPoints = 'M'+pad+','+H+' L' + points.split(' ').join(' L') + ' L'+(pad+(n-1)*xStep).toFixed(1)+','+H+' Z';
-
   var uid = 'g'+Math.random().toString(36).slice(2,7);
   var clipId = 'c'+uid;
   var svg = '<svg class="sparkline-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'
     + '<defs>'
-    +   '<linearGradient id="'+uid+'" x1="0" y1="0" x2="0" y2="1">'
-    +     '<stop offset="0%" stop-color="'+color+'" stop-opacity="0.3"/>'
-    +     '<stop offset="100%" stop-color="'+color+'" stop-opacity="0.02"/>'
-    +   '</linearGradient>'
+    +   '<linearGradient id="'+uid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+color+'" stop-opacity="0.3"/><stop offset="100%" stop-color="'+color+'" stop-opacity="0.02"/></linearGradient>'
     +   '<clipPath id="'+clipId+'"><rect class="spark-area-mask" x="0" y="0" width="'+W+'" height="'+H+'"/></clipPath>'
     + '</defs>'
     + '<g clip-path="url(#'+clipId+')">'
@@ -773,21 +807,27 @@ function buildSparkline(countsByYear, color, label){
     + '<polyline class="spark-line" points="'+points+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>';
   vals.forEach(function(v,i){
     var x = pad + i*xStep, y = H-pad - ((v/maxV)*(H-pad*2));
-    var delay = (i / Math.max(n-1,1)) * 1.0; // 0s → 1s across the line
+    var delay = (i / Math.max(n-1,1)) * 1.0;
     svg += '<circle class="spark-dot" style="animation-delay:'+delay.toFixed(2)+'s" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.8" fill="'+color+'"/>';
     svg += '<title>'+sorted[i].year+': '+v+' citation'+(v!==1?'s':'')+'</title>';
   });
   svg += '</svg>';
-
   var axis = '<div class="sparkline-axis">' + sorted.map(function(d){ return '<span>'+d.year+'</span>'; }).join('') + '</div>';
   return '<div class="sparkline-wrap"><div class="sparkline-title">'+label+'</div>'+svg+axis+'</div>';
 }
 
-function buildOJSSparkline(monthlyViews, label){
-  if (!monthlyViews) return '';
-  var keys = Object.keys(monthlyViews).sort();
+function buildMonthlySparkline(monthlyData, color, label, containerId){
+  // monthlyData: { 'YYYYMM': count } or array of {period, views}
+  var keys, vals;
+  if (Array.isArray(monthlyData)){
+    var sorted = monthlyData.slice().sort(function(a,b){ return a.period.localeCompare(b.period); });
+    keys = sorted.map(function(d){ return d.period; });
+    vals = sorted.map(function(d){ return d.value||d.views||d.downloads||0; });
+  } else {
+    keys = Object.keys(monthlyData).sort();
+    vals = keys.map(function(k){ return monthlyData[k]; });
+  }
   if (!keys.length) return '';
-  var vals = keys.map(function(k){ return monthlyViews[k]; });
   var maxV = Math.max.apply(null, vals);
   if (maxV === 0) return '';
   var W=440, H=40, pad=5;
@@ -797,16 +837,11 @@ function buildOJSSparkline(monthlyViews, label){
     return x.toFixed(1)+','+y.toFixed(1);
   }).join(' ');
   var areaPoints = 'M'+pad+','+H+' L' + points.split(' ').join(' L') + ' L'+(pad+(n-1)*xStep).toFixed(1)+','+H+' Z';
-
   var uid='g'+Math.random().toString(36).slice(2,7);
   var clipId = 'c'+uid;
-  var color='#1e8bc3';
   var svg = '<svg class="sparkline-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'
     + '<defs>'
-    +   '<linearGradient id="'+uid+'" x1="0" y1="0" x2="0" y2="1">'
-    +     '<stop offset="0%" stop-color="'+color+'" stop-opacity="0.3"/>'
-    +     '<stop offset="100%" stop-color="'+color+'" stop-opacity="0.02"/>'
-    +   '</linearGradient>'
+    +   '<linearGradient id="'+uid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+color+'" stop-opacity="0.3"/><stop offset="100%" stop-color="'+color+'" stop-opacity="0.02"/></linearGradient>'
     +   '<clipPath id="'+clipId+'"><rect class="spark-area-mask" x="0" y="0" width="'+W+'" height="'+H+'"/></clipPath>'
     + '</defs>'
     + '<g clip-path="url(#'+clipId+')">'
@@ -815,7 +850,18 @@ function buildOJSSparkline(monthlyViews, label){
     + '<polyline class="spark-line" points="'+points+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>';
 
   var names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var fmtM = function(m){ return names[parseInt(m.slice(4,6),10)] + " '" + m.slice(2,4); };
+  var fmtM = function(m){
+    if (!m) return '';
+    // Handle YYYY-MM format from Zenodo stats or YYYYMM from OJS
+    var yr, mo;
+    if (m.indexOf('-') > -1){
+      var parts = m.split('-');
+      yr = parts[0]; mo = parseInt(parts[1],10);
+    } else {
+      yr = m.slice(0,4); mo = parseInt(m.slice(4,6),10);
+    }
+    return (names[mo]||'') + " '" + yr.slice(2);
+  };
 
   vals.forEach(function(v,i){
     var x = pad+i*xStep, y = H-pad-((v/maxV)*(H-pad*2));
@@ -828,56 +874,53 @@ function buildOJSSparkline(monthlyViews, label){
   var axis = '<div class="sparkline-axis">' + keys.map(function(k,i){
     return (i===0||i===keys.length-1) ? '<span>'+fmtM(k)+'</span>' : '<span></span>';
   }).join('') + '</div>';
-  return '<div class="sparkline-wrap"><div class="sparkline-title">'+label+'</div>'+svg+axis+'</div>';
+  var html = '<div class="sparkline-wrap"><div class="sparkline-title">'+label+'</div>'+svg+axis+'</div>';
+  if (containerId) { var el = document.getElementById(containerId); if (el) el.innerHTML = html; }
+  return html;
 }
 
 /* ============================================
-   PUB OBJECT
+   PUB OBJECT (OJS)
 ============================================ */
 function makePub(doi){
   return {
     doi: doi, ojsId: ojsIdFromDoi(doi), doiKey: doiSortKey(doi),
-    // OJS metadata
     title: null, subtitle: null, authors: '', authorsList: [], datePublished: null, year: null,
     section: null, categories: [], pdfUrl: null, pdfDownloadUrl: null, articleUrl: 'https://doi.org/'+doi,
-    // Citations
-    oaCites: null, dcCites: null, crCites: null, crNotAvailable: false,
+    oaCites: null, dcCites: null,
     countsByYear: null,
-    // OJS stats
     ojsViews: null, ojsPdfs: null, ojsViewsByMonth: null,
-    // Bluesky
     bskyCount: null
   };
 }
 
 /* ============================================
-   RENDER
+   RENDER — OJS CARD
 ============================================ */
 function buildCard(pub, idx){
   var doiUrl = 'https://doi.org/' + pub.doi;
-  var titleClickUrl = doiUrl;
   var gsUrl = 'https://scholar.google.com/scholar?q=' + encodeURIComponent(pub.title||pub.doi);
 
-  // Top tags
   var topTags = '<div class="pub-top-meta">';
   if (pub.section)    topTags += '<span class="tag tag-section">' + escH(pub.section) + '</span>';
   pub.categories.forEach(function(c){ topTags += '<span class="tag tag-category">' + escH(c) + '</span>'; });
   if (pub.year) topTags += '<span class="tag tag-date">' + escH(pub.year) + '</span>';
   topTags += '</div>';
 
-  // Title + subtitle
   var titleBlock =
-      '<a href="'+titleClickUrl+'" target="_blank" class="pub-title">' + escH(pub.title || pub.doi) + '</a>'
+      '<a href="'+doiUrl+'" target="_blank" class="pub-title">' + escH(pub.title || pub.doi) + '</a>'
     + (pub.subtitle ? '<div class="pub-subtitle">' + escH(pub.subtitle) + '</div>' : '');
 
-  // Authors — render as plain text from authorsString, or as linked names if authorsList is populated
+  // Authors with ORCID links
   var authorsBlock;
   if (pub.authorsList && pub.authorsList.length) {
     authorsBlock = '<div class="pub-authors">' + pub.authorsList.map(function(a){
       if (a.orcid) {
-        return '<a href="https://orcid.org/' + escH(a.orcid) + '" target="_blank" class="author-link">'
+        // Clean ORCID: strip any URL prefix
+        var orcidId = a.orcid.replace(/^https?:\/\/orcid\.org\//,'');
+        return '<a href="https://orcid.org/' + escH(orcidId) + '" target="_blank" class="author-link">'
           + escH(a.name)
-          + '<svg class="orcid-icon" viewBox="0 0 256 256" aria-label="ORCID"><circle cx="128" cy="128" r="128" fill="#A6CE39"/><path fill="#fff" d="M86.3 186.2H70.9V79.1h15.4v107.1zm22.6-107.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7C191.7 111.2 178 93 148 93h-23.7v79.4zM88.7 56.8c0 5.5-4.5 10.1-10.1 10.1s-10.1-4.6-10.1-10.1c0-5.6 4.5-10.1 10.1-10.1s10.1 4.6 10.1 10.1z"/></svg>'
+          + '<svg class="orcid-icon" viewBox="0 0 256 256" aria-label="ORCID iD"><circle cx="128" cy="128" r="128" fill="#A6CE39"/><path fill="#fff" d="M86.3 186.2H70.9V79.1h15.4v107.1zm22.6-107.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7C191.7 111.2 178 93 148 93h-23.7v79.4zM88.7 56.8c0 5.5-4.5 10.1-10.1 10.1s-10.1-4.6-10.1-10.1c0-5.6 4.5-10.1 10.1-10.1s10.1 4.6 10.1 10.1z"/></svg>'
           + '</a>';
       }
       return '<span class="author-link">' + escH(a.name) + '</span>';
@@ -886,7 +929,6 @@ function buildCard(pub, idx){
     authorsBlock = '<div class="pub-authors">' + escH(pub.authors) + '</div>';
   }
 
-  // Action buttons: PDF viewer + direct PDF download
   var actions = '<div class="pub-actions">';
   if (pub.pdfUrl) {
     actions += '<a href="'+pub.pdfUrl+'" target="_blank" class="action-btn action-btn-primary">'
@@ -900,21 +942,12 @@ function buildCard(pub, idx){
   }
   actions += '</div>';
 
-  // Metrics
-  var crossrefVal;
-  if (pub.crCites !== null) crossrefVal = fmtNum(pub.crCites);
-  else if (pub.crNotAvailable) crossrefVal = '<span title="DOI registered with DataCite, not Crossref" style="color:var(--text-muted);font-weight:400">n/a</span>';
-  else crossrefVal = spin();
-
   var citeBadges = '<div class="metric-group">'
     + '<span class="metric-group-label">Citations:</span>'
     + '<span class="mbadge"><span class="src-dot" style="background:#2ecc71"></span>OpenAlex <span class="val">'+(pub.oaCites!==null?fmtNum(pub.oaCites):spin())+'</span></span>'
     + '<span class="mbadge"><span class="src-dot" style="background:#e67e22"></span>DataCite <span class="val">'+(pub.dcCites!==null?fmtNum(pub.dcCites):spin())+'</span></span>'
-    + '<span class="mbadge"><span class="src-dot" style="background:#e74c3c"></span>Crossref <span class="val">'+crossrefVal+'</span></span>'
     + '</div>';
 
-  // Bluesky mentions badge
-  // Bluesky mentions badge — link uses the Bluesky web search url: operator
   var bskyLink = 'https://bsky.app/search?q=' + encodeURIComponent('https://doi.org/' + pub.doi);
   var bskyBadge = '<div class="metric-group">'
     + '<span class="metric-group-label">Social:</span>'
@@ -932,32 +965,22 @@ function buildCard(pub, idx){
     + '</div>';
 
   var citeSpark = pub.countsByYear ? buildSparkline(pub.countsByYear, '#2ecc71', 'Citations by year (OpenAlex)') : '';
-  var ojsSpark  = (ojsData && ojsData.views) ? buildOJSSparkline(ojsData.views, 'Abstract views by month (OJS)') : '';
+  var ojsSpark  = (ojsData && ojsData.views) ? buildMonthlySparkline(ojsData.views, '#1e8bc3', 'Abstract views by month (OJS)') : '';
 
-  // Footer
   var footer = '<div class="pub-footer">'
     + '<a href="'+doiUrl+'" target="_blank" class="doi-chip">↗ '+escH(pub.doi)+'</a>'
     + '<span style="flex:1"></span>'
     + '<a href="https://openalex.org/works?filter=doi:'+pub.doi+'" target="_blank" class="pub-link">OpenAlex</a>'
     + '<span class="link-sep"></span>'
-    + '<a href="'+gsUrl+'" target="_blank" class="pub-link">Scholar</a>'
+    + '<a href="'+gsUrl+'" target="_blank" class="pub-link">Google Scholar</a>'
     + '<span class="link-sep"></span>'
     + '<a href="https://commons.datacite.org/doi.org/'+pub.doi+'" target="_blank" class="pub-link">DataCite</a>'
     + '</div>';
 
   return '<div class="pub-item" style="animation-delay:'+(idx*0.07)+'s">'
     + '<div>'
-    +   topTags
-    +   titleBlock
-    +   authorsBlock
-    +   actions
-    +   '<div class="metrics-block">'
-    +     citeBadges
-    +     viewsRow
-    +     bskyBadge
-    +     citeSpark
-    +     ojsSpark
-    +   '</div>'
+    +   topTags + titleBlock + authorsBlock + actions
+    +   '<div class="metrics-block">' + citeBadges + viewsRow + bskyBadge + citeSpark + ojsSpark + '</div>'
     +   footer
     + '</div>'
     + '<div class="pub-donut">'
@@ -968,7 +991,98 @@ function buildCard(pub, idx){
 }
 
 /* ============================================
-   SORT & RENDER
+   RENDER — ZENODO CARD
+============================================ */
+function buildZenodoCard(rec, idx){
+  var doi = rec.doi || '';
+  var doiUrl = doi ? 'https://doi.org/' + doi : rec.links_html || '#';
+  var gsUrl = rec.title ? 'https://scholar.google.com/scholar?q=' + encodeURIComponent(rec.title) : '';
+
+  var topTags = '<div class="pub-top-meta">';
+  if (rec.resource_type) topTags += '<span class="tag tag-zenodo">' + escH(rec.resource_type) + '</span>';
+  if (rec.year)          topTags += '<span class="tag tag-date">' + escH(rec.year) + '</span>';
+  topTags += '</div>';
+
+  var titleBlock = '<a href="'+doiUrl+'" target="_blank" class="pub-title">' + escH(rec.title || doi || 'Untitled') + '</a>';
+
+  // Authors with ORCID if available from Zenodo
+  var authorsBlock;
+  if (rec.authorsList && rec.authorsList.length) {
+    authorsBlock = '<div class="pub-authors">' + rec.authorsList.map(function(a){
+      if (a.orcid) {
+        var orcidId = a.orcid.replace(/^https?:\/\/orcid\.org\//,'');
+        return '<a href="https://orcid.org/' + escH(orcidId) + '" target="_blank" class="author-link">'
+          + escH(a.name)
+          + '<svg class="orcid-icon" viewBox="0 0 256 256" aria-label="ORCID iD"><circle cx="128" cy="128" r="128" fill="#A6CE39"/><path fill="#fff" d="M86.3 186.2H70.9V79.1h15.4v107.1zm22.6-107.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7C191.7 111.2 178 93 148 93h-23.7v79.4zM88.7 56.8c0 5.5-4.5 10.1-10.1 10.1s-10.1-4.6-10.1-10.1c0-5.6 4.5-10.1 10.1-10.1s10.1 4.6 10.1 10.1z"/></svg>'
+          + '</a>';
+      }
+      return '<span class="author-link">' + escH(a.name) + '</span>';
+    }).join(', ') + '</div>';
+  } else if (rec.authors) {
+    authorsBlock = '<div class="pub-authors">' + escH(rec.authors) + '</div>';
+  } else {
+    authorsBlock = '';
+  }
+
+  var actions = '<div class="pub-actions">';
+  if (rec.links_html) {
+    actions += '<a href="'+rec.links_html+'" target="_blank" class="action-btn action-btn-primary">'
+      + '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 2h12v12H2z"/><path d="M5 8h6M8 5v6"/></svg>'
+      + 'View on Zenodo</a>';
+  }
+  actions += '</div>';
+
+  // Stats
+  var viewsRow = '<div class="metric-group">'
+    + '<span class="metric-group-label">Zenodo stats:</span>'
+    + '<span class="view-chip">👁 Views <span class="val">'+(rec.stats_views!=null?fmtNum(rec.stats_views):'—')+'</span></span>'
+    + '<span class="view-chip">⬇ Downloads <span class="val">'+(rec.stats_downloads!=null?fmtNum(rec.stats_downloads):'—')+'</span></span>'
+    + '</div>';
+
+  var citeBadges = '';
+  if (doi) {
+    citeBadges = '<div class="metric-group">'
+      + '<span class="metric-group-label">Citations:</span>'
+      + '<span class="mbadge"><span class="src-dot" style="background:#2ecc71"></span>OpenAlex <span class="val">'+(rec.oaCites!=null?fmtNum(rec.oaCites):spin())+'</span></span>'
+      + '<span class="mbadge"><span class="src-dot" style="background:#e67e22"></span>DataCite <span class="val">'+(rec.dcCites!=null?fmtNum(rec.dcCites):spin())+'</span></span>'
+      + '</div>';
+  }
+
+  var bskyBadge = '';
+  if (doi) {
+    var bskyLink = 'https://bsky.app/search?q=' + encodeURIComponent('https://doi.org/' + doi);
+    bskyBadge = '<div class="metric-group">'
+      + '<span class="metric-group-label">Social:</span>'
+      + '<a href="'+bskyLink+'" target="_blank" class="mbadge mbadge-link"><span class="src-dot" style="background:#1185fe"></span>Bluesky posts <span class="val">'+(rec.bskyCount!=null?fmtNum(rec.bskyCount):spin())+'</span></a>'
+      + '</div>';
+  }
+
+  var citeSpark = (rec.countsByYear && rec.countsByYear.length) ? buildSparkline(rec.countsByYear, '#2ecc71', 'Citations by year (OpenAlex)') : '';
+
+  var footer = '<div class="pub-footer">';
+  if (doi) {
+    footer += '<a href="'+doiUrl+'" target="_blank" class="doi-chip">↗ '+escH(doi)+'</a>';
+    footer += '<span style="flex:1"></span>';
+    footer += '<a href="https://openalex.org/works?filter=doi:'+doi+'" target="_blank" class="pub-link">OpenAlex</a>';
+    if (gsUrl) footer += '<span class="link-sep"></span><a href="'+gsUrl+'" target="_blank" class="pub-link">Google Scholar</a>';
+    footer += '<span class="link-sep"></span><a href="https://commons.datacite.org/doi.org/'+doi+'" target="_blank" class="pub-link">DataCite</a>';
+  }
+  footer += '</div>';
+
+  var altmetricBadge = doi ? '<div class="altmetric-embed" data-badge-type="donut" data-doi="'+doi+'" data-hide-no-mentions="false" data-badge-popover="left"></div><div class="donut-label">Altmetric</div>' : '';
+
+  return '<div class="pub-item" style="animation-delay:'+(idx*0.06)+'s">'
+    + '<div>'
+    +   topTags + titleBlock + authorsBlock + actions
+    +   '<div class="metrics-block">' + viewsRow + citeBadges + bskyBadge + citeSpark + '</div>'
+    +   footer
+    + '</div>'
+    + '<div class="pub-donut">' + altmetricBadge + '</div>'
+    + '</div>';
+}
+
+/* ============================================
+   SORT & RENDER — OJS
 ============================================ */
 function setSort(mode){
   currentSort = mode;
@@ -994,17 +1108,41 @@ function renderPubs(){
 }
 
 /* ============================================
-   ANIMATIONS
+   SORT & RENDER — ZENODO
+============================================ */
+function setZSort(mode){
+  currentZSort = mode;
+  ['newest','oldest','views','downloads'].forEach(function(m){
+    document.getElementById('zsort-'+m).classList.toggle('active', m===mode);
+  });
+  renderZenodo();
+}
+
+function sortedZenodo(){
+  var copy = ALL_ZENODO.slice();
+  if (currentZSort==='newest') copy.sort(function(a,b){ return (b.year||0)-(a.year||0); });
+  else if (currentZSort==='oldest') copy.sort(function(a,b){ return (a.year||0)-(b.year||0); });
+  else if (currentZSort==='views') copy.sort(function(a,b){ return (b.stats_views||0)-(a.stats_views||0); });
+  else if (currentZSort==='downloads') copy.sort(function(a,b){ return (b.stats_downloads||0)-(a.stats_downloads||0); });
+  return copy;
+}
+
+function renderZenodo(){
+  var sorted = sortedZenodo();
+  document.getElementById('zenodo-list').innerHTML = sorted.map(function(r,i){ return buildZenodoCard(r,i); }).join('');
+  if (typeof window._altmetric_embed_init === 'function') window._altmetric_embed_init();
+}
+
+/* ============================================
+   ANIMATIONS / COUNTER
 ============================================ */
 function countUp(el, target, duration){
   if (!el) return;
   duration = duration || 1000;
-  // Handle the "—" or percentage cases
   if (target === null || target === undefined || target === '—'){
     el.textContent = '—'; return;
   }
   if (typeof target === 'string' && target.indexOf('%') > -1){
-    // Percentage string like "100%"
     var pct = parseFloat(target);
     if (isNaN(pct)){ el.textContent = target; return; }
     animateNumber(el, 0, pct, duration, function(v){ return Math.round(v) + '%'; });
@@ -1019,7 +1157,6 @@ function animateNumber(el, from, to, duration, formatter){
   var start = performance.now();
   function tick(now){
     var p = Math.min((now - start) / duration, 1);
-    // easeOutCubic
     var eased = 1 - Math.pow(1 - p, 3);
     var current = from + (to - from) * eased;
     el.textContent = formatter ? formatter(current) : Math.round(current);
@@ -1044,6 +1181,18 @@ function updateSummary(){
   else                 document.getElementById('sum-oa').textContent = '—';
 }
 
+function updateZenodoSummary(){
+  var dur = 1000;
+  countUp(document.getElementById('z-sum-items'), ALL_ZENODO.length, dur);
+  var v = ALL_ZENODO.reduce(function(s,r){ return s+(r.stats_views||0); },0);
+  countUp(document.getElementById('z-sum-views'), v, dur);
+  var d = ALL_ZENODO.reduce(function(s,r){ return s+(r.stats_downloads||0); },0);
+  countUp(document.getElementById('z-sum-downloads'), d, dur);
+  var c = ALL_ZENODO.reduce(function(s,r){ return s+(r.oaCites||0)+(r.dcCites||0); },0);
+  countUp(document.getElementById('z-sum-cites'), c, dur);
+  if (ALL_ZENODO.length) countUp(document.getElementById('z-sum-oa'), '100%', dur);
+}
+
 /* ============================================
    OJS STATS CSV
 ============================================ */
@@ -1064,24 +1213,238 @@ async function loadOJSStats(){
 /* ============================================
    LOADER STEP MANAGEMENT
 ============================================ */
-function setLoaderStep(stepName, state){
-  // state: 'active', 'done', or '' (idle)
-  var el = document.querySelector('.loader-step[data-step="'+stepName+'"]');
+function setLoaderStep(stepName, state, prefix){
+  prefix = prefix || '';
+  var sel = prefix ? '[data-zstep="'+stepName+'"]' : '[data-step="'+stepName+'"]';
+  var el = document.querySelector(sel);
   if (!el) return;
   el.classList.remove('active','done');
   if (state) el.classList.add(state);
 }
-function setLoaderProgress(pct){
-  var bar = document.getElementById('loader-progress-bar');
+function setLoaderProgress(pct, barId){
+  barId = barId || 'loader-progress-bar';
+  var bar = document.getElementById(barId);
   if (bar) bar.style.width = pct + '%';
 }
-function showLoader(show){
-  var l = document.getElementById('loader-wrap');
+function showLoader(show, wrapperId){
+  wrapperId = wrapperId || 'loader-wrap';
+  var l = document.getElementById(wrapperId);
   if (l) l.classList.toggle('hidden', !show);
 }
 
 /* ============================================
-   MAIN
+   BLUESKY SEARCH (shared helper)
+============================================ */
+async function fetchBskyCount(doi){
+  var fullDoiUrl = 'https://doi.org/' + doi;
+  var doiSuffix = doi.split('/').pop() || doi;
+  var urlParam   = 'https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?url=' + encodeURIComponent(fullDoiUrl) + '&limit=100';
+  var textSearch = 'https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=' + encodeURIComponent(doiSuffix) + '&limit=100';
+
+  try {
+    var results = await Promise.all([
+      fetchJSON(urlParam).catch(function(){ return null; }),
+      fetchJSON(textSearch).catch(function(){ return null; })
+    ]);
+    var seen = {};
+    var matched = [];
+    results.forEach(function(res){
+      if (!res || !res.posts) return;
+      res.posts.forEach(function(post){
+        if (seen[post.uri]) return;
+        var facets = (post.record && post.record.facets) || [];
+        var facetMatch = facets.some(function(f){
+          return (f.features || []).some(function(feat){ return feat.uri && feat.uri.indexOf(doi) !== -1; });
+        });
+        var embed = post.record && post.record.embed;
+        var embedMatch = false;
+        if (embed) {
+          var ext = embed.external || (embed.record && embed.record.external);
+          if (ext && ext.uri && ext.uri.indexOf(doi) !== -1) embedMatch = true;
+        }
+        var textMatch = (post.record && post.record.text && post.record.text.indexOf(doi) !== -1);
+        if (facetMatch || embedMatch || textMatch) { seen[post.uri] = true; matched.push(post.uri); }
+      });
+    });
+    return matched.length;
+  } catch(e){ return 0; }
+}
+
+/* ============================================
+   ZENODO COMMUNITY LOADER
+============================================ */
+async function loadZenodo(){
+  ZENODO_LOADED = true;
+  var btn = document.getElementById('refresh-btn');
+  btn.disabled = true; btn.textContent = '… Loading';
+
+  document.getElementById('z-status-dot').className = 'status-dot loading';
+  document.getElementById('z-status-text').textContent = 'Loading Zenodo community…';
+  document.getElementById('zenodo-list').innerHTML = '';
+  ALL_ZENODO = [];
+
+  showLoader(true, 'z-loader-wrap');
+  ['fetch','stats','enrich'].forEach(function(s){ setLoaderStep(s,'','z'); });
+  setLoaderStep('fetch','active','z');
+  setLoaderProgress(5, 'z-loader-progress-bar');
+
+  // 1. Fetch all records from Zenodo community r2
+  var allRecords = [];
+  var page = 1;
+  var pageSize = 100;
+  var hasMore = true;
+
+  while (hasMore) {
+    var url = ZENODO_API + '/records?communities=' + ZENODO_COMMUNITY + '&page=' + page + '&size=' + pageSize + '&sort=newest';
+    var data = await fetchJSON(url, 15000);
+    if (!data || !data.hits || !data.hits.hits) { hasMore = false; break; }
+    allRecords = allRecords.concat(data.hits.hits);
+    if (allRecords.length >= (data.hits.total || 0) || data.hits.hits.length < pageSize) hasMore = false;
+    page++;
+    if (page > 20) hasMore = false; // safety cap
+  }
+
+  setLoaderStep('fetch','done','z');
+  setLoaderStep('stats','active','z');
+  setLoaderProgress(30, 'z-loader-progress-bar');
+
+  document.getElementById('z-status-text').textContent = 'Processing ' + allRecords.length + ' records…';
+
+  // 2. Parse records
+  // Build monthly view aggregation across all records
+  var communityViewsByMonth = {};
+
+  ALL_ZENODO = allRecords.map(function(hit){
+    var meta = hit.metadata || {};
+    var doi = hit.doi || (meta.doi) || null;
+    var recId = hit.id || hit.record_id;
+    var year = null;
+    var dateStr = meta.publication_date || meta.created || hit.created || null;
+    if (dateStr) year = parseInt(dateStr.slice(0,4),10);
+
+    var authors = '';
+    var authorsList = [];
+    if (meta.creators && meta.creators.length) {
+      authorsList = meta.creators.map(function(c){
+        var name = c.name || ((c.given_name||'') + ' ' + (c.family_name||'')).trim();
+        var orcid = (c.orcid || (c.name_identifiers && c.name_identifiers.find(function(n){ return n.scheme==='orcid'; }) && c.name_identifiers.find(function(n){ return n.scheme==='orcid'; }).identifier)) || null;
+        return { name: name, orcid: orcid };
+      }).filter(function(a){ return a.name; });
+      authors = authorsList.map(function(a){ return a.name; }).join(', ');
+    }
+
+    var stats = hit.stats || {};
+    var views     = (stats.views != null ? stats.views : (stats.all_versions && stats.all_versions.views)) || 0;
+    var downloads = (stats.downloads != null ? stats.downloads : (stats.all_versions && stats.all_versions.downloads)) || 0;
+
+    var resource_type = '';
+    if (meta.resource_type) {
+      resource_type = meta.resource_type.title || meta.resource_type.type || '';
+      if (meta.resource_type.subtype) resource_type += ' / ' + meta.resource_type.subtype;
+    }
+
+    return {
+      id: recId, doi: doi, year: year,
+      title: meta.title || '',
+      authors: authors, authorsList: authorsList,
+      resource_type: resource_type,
+      datePublished: dateStr,
+      links_html: hit.links && hit.links.html,
+      stats_views: views,
+      stats_downloads: downloads,
+      oaCites: null, dcCites: null, countsByYear: null,
+      bskyCount: null
+    };
+  });
+
+  setLoaderStep('stats','done','z');
+  setLoaderStep('enrich','active','z');
+  setLoaderProgress(50, 'z-loader-progress-bar');
+
+  document.getElementById('z-status-text').textContent = 'Fetching citations & social mentions…';
+
+  // 3. Enrich with OpenAlex, DataCite, Bluesky (for records with DOIs)
+  var doiRecs = ALL_ZENODO.filter(function(r){ return r.doi; });
+
+  var oaProms = doiRecs.map(function(rec){
+    return fetchJSON('https://api.openalex.org/works/https://doi.org/'+rec.doi).then(function(oa){
+      if (!oa) return;
+      rec.oaCites = oa.cited_by_count != null ? oa.cited_by_count : null;
+      rec.countsByYear = oa.counts_by_year || [];
+    }).catch(function(){});
+  });
+
+  var dcProms = doiRecs.map(function(rec){
+    return fetchJSON('https://api.datacite.org/dois/'+encodeURIComponent(rec.doi)).then(function(dc){
+      if (!dc || !dc.data || !dc.data.attributes) return;
+      var attrs = dc.data.attributes;
+      if (attrs.citationCount != null) rec.dcCites = attrs.citationCount;
+    }).catch(function(){});
+  });
+
+  var bskyProms = doiRecs.map(function(rec){
+    return fetchBskyCount(rec.doi).then(function(count){ rec.bskyCount = count; }).catch(function(){ rec.bskyCount = 0; });
+  });
+
+  // Fetch community-level statistics (views by month) via Zenodo stats API
+  // Zenodo doesn't expose a community aggregate endpoint, so we aggregate from record stats
+  // Try per-record monthly stats from the stats endpoint
+  var statsProms = ALL_ZENODO.slice(0, 50).map(function(rec){ // limit to avoid rate limits
+    if (!rec.id) return Promise.resolve();
+    return fetchJSON('https://zenodo.org/api/stats', 5000).then(function(){ return null; }).catch(function(){ return null; });
+  });
+
+  await Promise.all(oaProms.concat(dcProms).concat(bskyProms));
+
+  // Aggregate community views by year-month from record creation dates (rough proxy)
+  // Build a better approximation: group records by publication month
+  ALL_ZENODO.forEach(function(rec){
+    if (!rec.datePublished) return;
+    var m = rec.datePublished.slice(0,7); // YYYY-MM
+    if (!communityViewsByMonth[m]) communityViewsByMonth[m] = 0;
+    communityViewsByMonth[m] += (rec.stats_views || 0);
+  });
+
+  setLoaderStep('enrich','done','z');
+  setLoaderProgress(100, 'z-loader-progress-bar');
+
+  await new Promise(function(r){ setTimeout(r, 300); });
+  showLoader(false, 'z-loader-wrap');
+
+  // Render
+  renderZenodo();
+  updateZenodoSummary();
+
+  // Community sparkline — aggregate views by month
+  if (Object.keys(communityViewsByMonth).length > 1) {
+    buildMonthlySparkline(communityViewsByMonth, '#024d94', 'Community total views by publication month', 'z-community-spark');
+  } else {
+    // If we don't have enough monthly spread, show by year
+    var byYear = {};
+    ALL_ZENODO.forEach(function(rec){
+      if (!rec.year) return;
+      if (!byYear[rec.year]) byYear[rec.year] = 0;
+      byYear[rec.year] += (rec.stats_views || 0);
+    });
+    if (Object.keys(byYear).length > 0) {
+      var arr = Object.keys(byYear).sort().map(function(y){ return { period: y+'-01', value: byYear[y] }; });
+      buildMonthlySparkline(arr, '#024d94', 'Community total views by year', 'z-community-spark');
+    }
+  }
+
+  var now = new Date();
+  document.getElementById('z-status-dot').className = 'status-dot done';
+  document.getElementById('z-status-text').textContent =
+    'Loaded ' + ALL_ZENODO.length + ' Zenodo record' + (ALL_ZENODO.length!==1?'s':'')
+    + ' · ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
+    + ' · Zenodo · OpenAlex · DataCite · Bluesky · Altmetric';
+
+  btn.disabled = false; btn.textContent = '↺ Refresh';
+  if (typeof window._altmetric_embed_init === 'function') window._altmetric_embed_init();
+}
+
+/* ============================================
+   MAIN — OJS TAB
 ============================================ */
 async function loadAll(){
   var btn = document.getElementById('refresh-btn');
@@ -1093,13 +1456,11 @@ async function loadAll(){
   ALL_PUBS = []; OJS_DATA = {}; OJS_FILE_DATE = null;
   SECTIONS = {}; CATEGORIES = {};
 
-  // Show loader and reset all steps
-  showLoader(true);
+  showLoader(true, 'loader-wrap');
   ['dois','meta','cites','ojs'].forEach(function(s){ setLoaderStep(s,''); });
   setLoaderStep('dois','active');
   setLoaderProgress(5);
 
-  /* 1 — DOI list + sections/categories in parallel */
   var [doiText, _] = await Promise.all([
     fetchText(DOIS_URL),
     loadSectionsAndCategories()
@@ -1122,8 +1483,6 @@ async function loadAll(){
 
   ALL_PUBS = rawDois.map(makePub);
 
-  /* 2 — OJS submission metadata (title, subtitle, authors, section, categories, PDF URL)
-        + DataCite metadata as fallback (title, authors, date) in case OJS fails */
   var ojsPromises = ALL_PUBS.map(function(pub){
     if (!pub.ojsId) return Promise.resolve();
     return loadOJSSubmission(pub.ojsId).then(function(sub){
@@ -1144,17 +1503,12 @@ async function loadAll(){
     });
   });
 
-  // DataCite fallback metadata (always fetch — provides backup if OJS CORS-blocked)
   var dcMetaPromises = ALL_PUBS.map(function(pub){
     return fetchJSON('https://api.datacite.org/dois/'+encodeURIComponent(pub.doi)).then(function(dc){
       if (!dc || !dc.data || !dc.data.attributes) return;
       var attrs = dc.data.attributes;
-      // Citation count (always use this since it's authoritative DataCite data)
       if (attrs.citationCount != null) pub.dcCites = attrs.citationCount;
-      // Title/authors fallback ONLY if OJS didn't populate them
-      if (!pub.title && attrs.titles && attrs.titles[0]) {
-        pub.title = attrs.titles[0].title || null;
-      }
+      if (!pub.title && attrs.titles && attrs.titles[0]) pub.title = attrs.titles[0].title || null;
       if (!pub.authors && attrs.creators && attrs.creators.length) {
         pub.authors = attrs.creators.map(function(c){
           return c.familyName ? c.familyName + ', ' + (c.givenName ? c.givenName.charAt(0)+'.' : '') : (c.name || '');
@@ -1174,99 +1528,28 @@ async function loadAll(){
   setLoaderStep('ojs','active');
   setLoaderProgress(60);
 
-  /* 3 — Citations + OJS stats CSV in parallel */
   document.getElementById('status-text').textContent = 'Fetching citations & OJS usage stats…';
 
-  var ojsCSV   = loadOJSStats().then(function(){
+  var ojsCSV = loadOJSStats().then(function(){
     setLoaderStep('ojs','done');
     setLoaderProgress(80);
   });
-  var oaProms  = ALL_PUBS.map(function(pub){
+  var oaProms = ALL_PUBS.map(function(pub){
     return fetchJSON('https://api.openalex.org/works/https://doi.org/'+pub.doi).then(function(oa){
       if (!oa) return;
       pub.oaCites = oa.cited_by_count != null ? oa.cited_by_count : null;
       pub.countsByYear = oa.counts_by_year || [];
     });
   });
-  var crProms  = ALL_PUBS.map(function(pub){
-    return fetchJSON('https://api.crossref.org/works/'+pub.doi).then(function(cr){
-      if (cr && cr.message && cr.message['is-referenced-by-count'] != null) {
-        pub.crCites = cr.message['is-referenced-by-count'];
-      } else {
-        // Crossref returned no record — DOI is likely DataCite-registered, not in Crossref
-        pub.crNotAvailable = true;
-      }
-    });
-  });
-  // Bluesky: multi-strategy search for posts mentioning DOIs
-  // Strategy 1: url= param (matches facet links + embeds — may not be supported on all servers)
-  // Strategy 2: text search for unique DOI fragment, then client-side filter by facet/embed URIs
-  // Strategy 3: text search for the short doi.org/... string
   var bskyProms = ALL_PUBS.map(function(pub){
-    var fullDoiUrl = 'https://doi.org/' + pub.doi;
-    // Extract a unique fragment from the DOI for text search (last part, e.g. "replicationresearch-2026-9577")
-    var doiSuffix = pub.doi.split('/').pop() || pub.doi;
-
-    // Build URLs for all strategies
-    var urlParam   = 'https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?url=' + encodeURIComponent(fullDoiUrl) + '&limit=100';
-    var textSearch = 'https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=' + encodeURIComponent(doiSuffix) + '&limit=100';
-
-    return Promise.all([
-      fetchJSON(urlParam).catch(function(){ return null; }),
-      fetchJSON(textSearch).catch(function(){ return null; })
-    ]).then(function(results){
-      var seen = {};
-      var matched = [];
-
-      results.forEach(function(res){
-        if (!res || !res.posts) return;
-        res.posts.forEach(function(post){
-          if (seen[post.uri]) return;
-
-          // Check if the post actually references this DOI:
-          // 1. Check facet link URIs
-          var facets = (post.record && post.record.facets) || [];
-          var facetMatch = facets.some(function(f){
-            return (f.features || []).some(function(feat){
-              return feat.uri && feat.uri.indexOf(pub.doi) !== -1;
-            });
-          });
-
-          // 2. Check embed external URI (link card)
-          var embed = post.record && post.record.embed;
-          var embedMatch = false;
-          if (embed) {
-            var ext = embed.external || (embed.record && embed.record.external);
-            if (ext && ext.uri && ext.uri.indexOf(pub.doi) !== -1) embedMatch = true;
-          }
-
-          // 3. Check post text itself
-          var textMatch = (post.record && post.record.text && post.record.text.indexOf(pub.doi) !== -1);
-
-          if (facetMatch || embedMatch || textMatch) {
-            seen[post.uri] = true;
-            matched.push({
-              uri: post.uri,
-              author: post.author && post.author.handle,
-              text: (post.record && post.record.text) || '',
-              likeCount: post.likeCount || 0,
-              repostCount: post.repostCount || 0
-            });
-          }
-        });
-      });
-
-      pub.bskyCount = matched.length;
-      pub.bskyPosts = matched;
-    }).catch(function(){ pub.bskyCount = 0; });
+    return fetchBskyCount(pub.doi).then(function(count){ pub.bskyCount = count; }).catch(function(){ pub.bskyCount = 0; });
   });
 
-  await Promise.all([ojsCSV].concat(oaProms).concat(crProms).concat(bskyProms));
+  await Promise.all([ojsCSV].concat(oaProms).concat(bskyProms));
 
   setLoaderStep('cites','done');
   setLoaderProgress(100);
 
-  /* 4 — Attach OJS view/download counts */
   ALL_PUBS.forEach(function(pub){
     if (pub.ojsId && OJS_DATA[pub.ojsId]){
       pub.ojsViews = sumObj(OJS_DATA[pub.ojsId].views);
@@ -1275,15 +1558,12 @@ async function loadAll(){
     }
   });
 
-  /* Hide loader after a short beat so the user sees it complete */
   await new Promise(function(r){ setTimeout(r, 300); });
-  showLoader(false);
+  showLoader(false, 'loader-wrap');
 
-  /* 5 — Render + summary */
   renderPubs();
   updateSummary();
 
-  /* 6 — OJS file date note */
   var ojsEl = document.getElementById('ojs-note');
   if (OJS_FILE_DATE) {
     ojsEl.innerHTML = 'OJS stats as of <strong>'+OJS_FILE_DATE+'</strong><br><a href="https://github.com/LukasRoeseler/r2d2/tree/main/statistics" target="_blank">Update CSV ↗</a>';
@@ -1298,7 +1578,7 @@ async function loadAll(){
   document.getElementById('status-text').textContent =
     'Loaded '+ALL_PUBS.length+' publication'+(ALL_PUBS.length!==1?'s':'')+' · '
     + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
-    + ' · OJS · OpenAlex · DataCite · Crossref · Altmetric';
+    + ' · OJS · OpenAlex · DataCite · Altmetric';
 
   btn.disabled = false; btn.textContent = '↺ Refresh';
 }
