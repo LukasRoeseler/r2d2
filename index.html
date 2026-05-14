@@ -502,7 +502,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 
       <div class="zenodo-intro">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#024d94" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-        <div>Records from the <a href="https://zenodo.org/communities/r2/records" target="_blank">R2 Zenodo Community ↗</a>. Stats (views, downloads) are fetched live from the Zenodo API. Citations are enriched from OpenAlex and DataCite.</div>
+        <div>Records from the <a href="https://zenodo.org/communities/r2/records" target="_blank">R2 Zenodo Community ↗</a>. Record metadata &amp; stats are from a snapshot (2026-05-14) — Zenodo blocks browser API calls. Citations are enriched live from OpenAlex and DataCite.</div>
       </div>
 
       <div class="status-bar">
@@ -1276,6 +1276,14 @@ async function fetchBskyCount(doi){
 /* ============================================
    ZENODO COMMUNITY LOADER
 ============================================ */
+/* ============================================
+   ZENODO SEED DATA (fetched 2026-05-14)
+   Note: Zenodo API returns 403 to browser User-Agents,
+   so we embed a snapshot here and enrich live via
+   OpenAlex, DataCite, and Bluesky.
+============================================ */
+var ZENODO_SEED = [{"id":20029998,"doi":"10.5281/zenodo.20029998","title":"Replication Research Poster","year":2026,"datePublished":"2026-05-04","resource_type":"Poster","links_html":"https://zenodo.org/records/20029998","stats_views":46,"stats_downloads":37,"authors":"Röseler, Lukas, Verheyen, Steven, Kolber, Neele, Müller, Miriam","authorsList":[{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"},{"name":"Verheyen, Steven","orcid":"0000-0002-6778-6744"},{"name":"Kolber, Neele","orcid":"0009-0008-0771-1055"},{"name":"Müller, Miriam","orcid":"0009-0006-6029-8808"}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null},{"id":19726988,"doi":"10.5281/zenodo.19726988","title":"Replication Research Constitution","year":2026,"datePublished":"2026-04-24","resource_type":"Other","links_html":"https://zenodo.org/records/19726988","stats_views":74,"stats_downloads":65,"authors":"Röseler, Lukas, Wallrich, Lukas, Adler, Susanne, Evans, Thomas Rhys, Goltermann, Janik, Gut, Ulrike, Korbmacher, Max, Oppong Boakye, Prince, Verheyen, Steven, Visser, Ingmar, Azevedo, Flavio","authorsList":[{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"},{"name":"Wallrich, Lukas","orcid":"0000-0003-2121-5177"},{"name":"Adler, Susanne","orcid":"0000-0002-3211-6871"},{"name":"Evans, Thomas Rhys","orcid":"0000-0002-6670-0718"},{"name":"Goltermann, Janik","orcid":"0000-0003-3087-1002"},{"name":"Gut, Ulrike","orcid":"0000-0002-8395-4357"},{"name":"Korbmacher, Max","orcid":"0000-0002-8113-2560"},{"name":"Oppong Boakye, Prince","orcid":"0009-0003-5447-8034"},{"name":"Verheyen, Steven","orcid":"0000-0002-6778-6744"},{"name":"Visser, Ingmar","orcid":"0000-0003-3855-2778"},{"name":"Azevedo, Flavio","orcid":"0000-0001-9000-8513"}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null},{"id":19726753,"doi":"10.5281/zenodo.19726753","title":"R2 General Assembly (Spring 2026)","year":2026,"datePublished":"2026-04-24","resource_type":"Presentation","links_html":"https://zenodo.org/records/19726753","stats_views":36,"stats_downloads":36,"authors":"Röseler, Lukas","authorsList":[{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null},{"id":19710622,"doi":"10.5281/zenodo.19710622","title":"Conditions under which R2 will be discontinued after a runtime of 26 months","year":2026,"datePublished":"2026-04-23","resource_type":"Journal","links_html":"https://zenodo.org/records/19710622","stats_views":137,"stats_downloads":133,"authors":"Röseler, Lukas, Wallrich, Lukas, Azevedo, Flavio","authorsList":[{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"},{"name":"Wallrich, Lukas","orcid":"0000-0003-2121-5177"},{"name":"Azevedo, Flavio","orcid":"0000-0001-9000-8513"}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null},{"id":18757136,"doi":"10.5281/zenodo.18757136","title":"Replication Research Manuscript Layout","year":2025,"datePublished":"2025-02-24","resource_type":"Workflow","links_html":"https://zenodo.org/records/18757136","stats_views":190,"stats_downloads":36,"authors":"Müller, Miriam, Gobeze, Hiluf Abay, Wallrich, Lukas, Azevedo, Flávio, Röseler, Lukas","authorsList":[{"name":"Müller, Miriam","orcid":"0009-0006-6029-8808"},{"name":"Gobeze, Hiluf Abay","orcid":""},{"name":"Wallrich, Lukas","orcid":"0000-0003-2121-5177"},{"name":"Azevedo, Flávio","orcid":"0000-0003-4059-2867"},{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null},{"id":18229852,"doi":"10.5281/zenodo.18229852","title":"Initial Editorial Assessment Form (Replication Research)","year":2026,"datePublished":"2026-01-13","resource_type":"Workflow","links_html":"https://zenodo.org/records/18229852","stats_views":590,"stats_downloads":323,"authors":"Müller, Miriam, Röseler, Lukas, Wallrich, Lukas","authorsList":[{"name":"Müller, Miriam","orcid":"0009-0006-6029-8808"},{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"},{"name":"Wallrich, Lukas","orcid":"0000-0003-2121-5177"}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null},{"id":17241396,"doi":"10.5281/zenodo.17241396","title":"Replication Research: Journal Description","year":2025,"datePublished":"2025-10-06","resource_type":"Other","links_html":"https://zenodo.org/records/17241396","stats_views":147,"stats_downloads":145,"authors":"Röseler, Lukas, Wallrich, Lukas, Adler, Susanne, Back, Mitja, Busch, Niko, Dienlin, Tobias, Evans, Thomas Rhys, Goltermann, Janik, Hartmann, Helena, Horstmann, Jan, Korbmacher, Max, Oppong Boakye, Prince, Richter, Helene, Richter, Maike, Silverstein, Priya, Steltenpohl, Crystal N., Syed, Moin, Vaidis, David, Verheyen, Steven, Visser, Ingmar, Azevedo, Flavio","authorsList":[{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"},{"name":"Wallrich, Lukas","orcid":"0000-0003-2121-5177"},{"name":"Adler, Susanne","orcid":"0000-0002-3211-6871"},{"name":"Back, Mitja","orcid":"0000-0003-2186-1558"},{"name":"Busch, Niko","orcid":"0000-0003-4837-0345"},{"name":"Dienlin, Tobias","orcid":"0000-0002-6875-8083"},{"name":"Evans, Thomas Rhys","orcid":"0000-0002-6670-0718"},{"name":"Goltermann, Janik","orcid":"0000-0003-3087-1002"},{"name":"Hartmann, Helena","orcid":"0000-0002-1331-6683"},{"name":"Horstmann, Jan","orcid":"0000-0001-8047-2232"},{"name":"Korbmacher, Max","orcid":"0000-0002-8113-2560"},{"name":"Oppong Boakye, Prince","orcid":"0009-0003-5447-8034"},{"name":"Richter, Helene","orcid":"0000-0001-5990-0087"},{"name":"Richter, Maike","orcid":"0000-0003-4078-3954"},{"name":"Silverstein, Priya","orcid":"0000-0003-0095-339X"},{"name":"Steltenpohl, Crystal N.","orcid":"0000-0001-5049-9354"},{"name":"Syed, Moin","orcid":"0000-0003-4759-3555"},{"name":"Vaidis, David","orcid":"0000-0002-1954-2219"},{"name":"Verheyen, Steven","orcid":"0000-0002-6778-6744"},{"name":"Visser, Ingmar","orcid":"0000-0003-3855-2778"},{"name":"Azevedo, Flavio","orcid":"0000-0001-9000-8513"}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null},{"id":17062133,"doi":"10.5281/zenodo.17062133","title":"Handbook for Reproduction and Replication Studies","year":2025,"datePublished":"2025-09-05","resource_type":"Book","links_html":"https://zenodo.org/records/17062133","stats_views":862,"stats_downloads":715,"authors":"Röseler, Lukas, Wallrich, Lukas, Hartmann, Helena, Altegoer, Luisa, Boyce, Veronica, Field, Sarahanne, Goltermann, Janik, Hüffmeier, Joachim, Pennington, Charlotte, Pittelkow, Merle-Marie, Silverstein, Priya, van Ravenzwaaij, Don, Azevedo, Flavio","authorsList":[{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"},{"name":"Wallrich, Lukas","orcid":"0000-0003-2121-5177"},{"name":"Hartmann, Helena","orcid":"0000-0002-1331-6683"},{"name":"Altegoer, Luisa","orcid":"0000-0001-8466-7328"},{"name":"Boyce, Veronica","orcid":"0000-0002-8890-2775"},{"name":"Field, Sarahanne","orcid":"0000-0001-7874-1261"},{"name":"Goltermann, Janik","orcid":"0000-0003-3087-1002"},{"name":"Hüffmeier, Joachim","orcid":"0000-0002-0490-7035"},{"name":"Pennington, Charlotte","orcid":"0000-0002-5259-642X"},{"name":"Pittelkow, Merle-Marie","orcid":"0000-0002-7487-7898"},{"name":"Silverstein, Priya","orcid":"0000-0003-0095-339X"},{"name":"van Ravenzwaaij, Don","orcid":"0000-0002-5030-4091"},{"name":"Azevedo, Flavio","orcid":"0000-0001-9000-8513"}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null},{"id":15487804,"doi":"10.5281/zenodo.15487804","title":"Replication Research Symposium: Book of Abstracts","year":2025,"datePublished":"2025-05-22","resource_type":"Conference proceeding","links_html":"https://zenodo.org/records/15487804","stats_views":192,"stats_downloads":136,"authors":"Röseler, Lukas, Moser, Victoria, Schüller, Sophie, Förster, Claudia","authorsList":[{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"},{"name":"Moser, Victoria","orcid":"0009-0004-1727-9308"},{"name":"Schüller, Sophie","orcid":"0009-0002-7471-5116"},{"name":"Förster, Claudia","orcid":""}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null},{"id":17776685,"doi":"10.5281/zenodo.17776685","title":"Replication Research Flyer","year":2025,"datePublished":"2025-12-01","resource_type":"Poster","links_html":"https://zenodo.org/records/17776685","stats_views":151,"stats_downloads":46,"authors":"Röseler, Lukas, Moser, Victoria","authorsList":[{"name":"Röseler, Lukas","orcid":"0000-0002-6446-1901"},{"name":"Moser, Victoria","orcid":"0009-0004-1727-9308"}],"oaCites":null,"dcCites":null,"countsByYear":null,"bskyCount":null}];
+
 async function loadZenodo(){
   ZENODO_LOADED = true;
   var btn = document.getElementById('refresh-btn');
@@ -1289,158 +1297,80 @@ async function loadZenodo(){
   showLoader(true, 'z-loader-wrap');
   ['fetch','stats','enrich'].forEach(function(s){ setLoaderStep(s,'','z'); });
   setLoaderStep('fetch','active','z');
-  setLoaderProgress(5, 'z-loader-progress-bar');
+  setLoaderProgress(10, 'z-loader-progress-bar');
 
-  // 1. Fetch all records from Zenodo community r2
-  var allRecords = [];
-  var page = 1;
-  var pageSize = 100;
-  var hasMore = true;
-
-  while (hasMore) {
-    var url = ZENODO_API + '/records?communities=' + ZENODO_COMMUNITY + '&page=' + page + '&size=' + pageSize + '&sort=newest';
-    var data = await fetchJSON(url, 15000);
-    if (!data || !data.hits || !data.hits.hits) { hasMore = false; break; }
-    allRecords = allRecords.concat(data.hits.hits);
-    if (allRecords.length >= (data.hits.total || 0) || data.hits.hits.length < pageSize) hasMore = false;
-    page++;
-    if (page > 20) hasMore = false; // safety cap
-  }
+  // Use embedded seed data (Zenodo blocks browser User-Agents with 403)
+  // Deep-clone so we can mutate oaCites/dcCites/bskyCount freely
+  ALL_ZENODO = ZENODO_SEED.map(function(r){ return Object.assign({}, r, { authorsList: r.authorsList.slice() }); });
 
   setLoaderStep('fetch','done','z');
   setLoaderStep('stats','active','z');
   setLoaderProgress(30, 'z-loader-progress-bar');
 
-  document.getElementById('z-status-text').textContent = 'Processing ' + allRecords.length + ' records…';
+  document.getElementById('z-status-text').textContent = 'Loaded ' + ALL_ZENODO.length + ' records — enriching with citations & social…';
 
-  // 2. Parse records
-  // Build monthly view aggregation across all records
+  // Render immediately with seed data so the user sees records right away
+  renderZenodo();
+  updateZenodoSummary();
+
+  // Build the views-by-publication-month sparkline from seed stats
   var communityViewsByMonth = {};
-
-  ALL_ZENODO = allRecords.map(function(hit){
-    var meta = hit.metadata || {};
-    var doi = hit.doi || (meta.doi) || null;
-    var recId = hit.id || hit.record_id;
-    var year = null;
-    var dateStr = meta.publication_date || meta.created || hit.created || null;
-    if (dateStr) year = parseInt(dateStr.slice(0,4),10);
-
-    var authors = '';
-    var authorsList = [];
-    if (meta.creators && meta.creators.length) {
-      authorsList = meta.creators.map(function(c){
-        var name = c.name || ((c.given_name||'') + ' ' + (c.family_name||'')).trim();
-        var orcid = (c.orcid || (c.name_identifiers && c.name_identifiers.find(function(n){ return n.scheme==='orcid'; }) && c.name_identifiers.find(function(n){ return n.scheme==='orcid'; }).identifier)) || null;
-        return { name: name, orcid: orcid };
-      }).filter(function(a){ return a.name; });
-      authors = authorsList.map(function(a){ return a.name; }).join(', ');
-    }
-
-    var stats = hit.stats || {};
-    var views     = (stats.views != null ? stats.views : (stats.all_versions && stats.all_versions.views)) || 0;
-    var downloads = (stats.downloads != null ? stats.downloads : (stats.all_versions && stats.all_versions.downloads)) || 0;
-
-    var resource_type = '';
-    if (meta.resource_type) {
-      resource_type = meta.resource_type.title || meta.resource_type.type || '';
-      if (meta.resource_type.subtype) resource_type += ' / ' + meta.resource_type.subtype;
-    }
-
-    return {
-      id: recId, doi: doi, year: year,
-      title: hit.title || meta.title || '',
-      authors: authors, authorsList: authorsList,
-      resource_type: resource_type,
-      datePublished: dateStr,
-      links_html: (hit.links && (hit.links.self_html || hit.links.html)) || null,
-      stats_views: views,
-      stats_downloads: downloads,
-      oaCites: null, dcCites: null, countsByYear: null,
-      bskyCount: null
-    };
+  ALL_ZENODO.forEach(function(rec){
+    if (!rec.datePublished) return;
+    var m = rec.datePublished.slice(0,7);
+    communityViewsByMonth[m] = (communityViewsByMonth[m]||0) + (rec.stats_views||0);
   });
+  var sparkData = Object.keys(communityViewsByMonth).sort().map(function(m){
+    return { period: m, value: communityViewsByMonth[m] };
+  });
+  if (sparkData.length > 0) {
+    buildMonthlySparkline(sparkData, '#024d94', 'Community views by publication month (Zenodo)', 'z-community-spark');
+  }
 
   setLoaderStep('stats','done','z');
   setLoaderStep('enrich','active','z');
   setLoaderProgress(50, 'z-loader-progress-bar');
 
-  document.getElementById('z-status-text').textContent = 'Fetching citations & social mentions…';
-
-  // 3. Enrich with OpenAlex, DataCite, Bluesky (for records with DOIs)
+  // Enrich: OpenAlex, DataCite, Bluesky — all run in parallel, re-render when each batch finishes
   var doiRecs = ALL_ZENODO.filter(function(r){ return r.doi; });
 
   var oaProms = doiRecs.map(function(rec){
-    return fetchJSON('https://api.openalex.org/works/https://doi.org/'+rec.doi).then(function(oa){
-      if (!oa) return;
-      rec.oaCites = oa.cited_by_count != null ? oa.cited_by_count : null;
+    return fetchJSON('https://api.openalex.org/works/https://doi.org/'+rec.doi, 12000).then(function(oa){
+      if (!oa) { rec.oaCites = 0; return; }
+      rec.oaCites = oa.cited_by_count != null ? oa.cited_by_count : 0;
       rec.countsByYear = oa.counts_by_year || [];
-    }).catch(function(){});
+    }).catch(function(){ rec.oaCites = 0; });
   });
 
   var dcProms = doiRecs.map(function(rec){
-    return fetchJSON('https://api.datacite.org/dois/'+encodeURIComponent(rec.doi)).then(function(dc){
-      if (!dc || !dc.data || !dc.data.attributes) return;
-      var attrs = dc.data.attributes;
-      if (attrs.citationCount != null) rec.dcCites = attrs.citationCount;
-    }).catch(function(){});
+    return fetchJSON('https://api.datacite.org/dois/'+encodeURIComponent(rec.doi), 12000).then(function(dc){
+      if (!dc || !dc.data || !dc.data.attributes) { rec.dcCites = 0; return; }
+      rec.dcCites = dc.data.attributes.citationCount != null ? dc.data.attributes.citationCount : 0;
+    }).catch(function(){ rec.dcCites = 0; });
   });
 
   var bskyProms = doiRecs.map(function(rec){
     return fetchBskyCount(rec.doi).then(function(count){ rec.bskyCount = count; }).catch(function(){ rec.bskyCount = 0; });
   });
 
-  // Fetch community-level statistics (views by month) via Zenodo stats API
-  // Zenodo doesn't expose a community aggregate endpoint, so we aggregate from record stats
-  // Try per-record monthly stats from the stats endpoint
-  var statsProms = ALL_ZENODO.slice(0, 50).map(function(rec){ // limit to avoid rate limits
-    if (!rec.id) return Promise.resolve();
-    return fetchJSON('https://zenodo.org/api/stats', 5000).then(function(){ return null; }).catch(function(){ return null; });
-  });
-
   await Promise.all(oaProms.concat(dcProms).concat(bskyProms));
-
-  // Aggregate community views by year-month from record creation dates (rough proxy)
-  // Build a better approximation: group records by publication month
-  ALL_ZENODO.forEach(function(rec){
-    if (!rec.datePublished) return;
-    var m = rec.datePublished.slice(0,7); // YYYY-MM
-    if (!communityViewsByMonth[m]) communityViewsByMonth[m] = 0;
-    communityViewsByMonth[m] += (rec.stats_views || 0);
-  });
 
   setLoaderStep('enrich','done','z');
   setLoaderProgress(100, 'z-loader-progress-bar');
 
-  await new Promise(function(r){ setTimeout(r, 300); });
+  await new Promise(function(r){ setTimeout(r, 200); });
   showLoader(false, 'z-loader-wrap');
 
-  // Render
+  // Final re-render with enriched data
   renderZenodo();
   updateZenodoSummary();
-
-  // Community sparkline — aggregate views by month
-  if (Object.keys(communityViewsByMonth).length > 1) {
-    buildMonthlySparkline(communityViewsByMonth, '#024d94', 'Community total views by publication month', 'z-community-spark');
-  } else {
-    // If we don't have enough monthly spread, show by year
-    var byYear = {};
-    ALL_ZENODO.forEach(function(rec){
-      if (!rec.year) return;
-      if (!byYear[rec.year]) byYear[rec.year] = 0;
-      byYear[rec.year] += (rec.stats_views || 0);
-    });
-    if (Object.keys(byYear).length > 0) {
-      var arr = Object.keys(byYear).sort().map(function(y){ return { period: y+'-01', value: byYear[y] }; });
-      buildMonthlySparkline(arr, '#024d94', 'Community total views by year', 'z-community-spark');
-    }
-  }
 
   var now = new Date();
   document.getElementById('z-status-dot').className = 'status-dot done';
   document.getElementById('z-status-text').textContent =
-    'Loaded ' + ALL_ZENODO.length + ' Zenodo record' + (ALL_ZENODO.length!==1?'s':'')
-    + ' · ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
-    + ' · Zenodo · OpenAlex · DataCite · Bluesky · Altmetric';
+    ALL_ZENODO.length + ' records · snapshot 2026-05-14 · enriched '
+    + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
+    + ' · OpenAlex · DataCite · Bluesky · Altmetric';
 
   btn.disabled = false; btn.textContent = '↺ Refresh';
   if (typeof window._altmetric_embed_init === 'function') window._altmetric_embed_init();
