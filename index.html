@@ -545,6 +545,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 ============================================ */
 var DOIS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/dois.txt';
 var STATS_DIR = 'https://api.github.com/repos/LukasRoeseler/r2d2/contents/statistics';
+var STATS_RAW = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/statistics/';
 var OJS_BASE  = 'https://ejournals.uni-muenster.de/index.php/replicationresearch/api/v1';
 var ZENODO_COMMUNITY = 'r2';
 var ZENODO_API = 'https://zenodo.org/api';
@@ -716,16 +717,48 @@ function getOJSMeta(sub){
 }
 
 /* ============================================
-   OJS CSV PARSING
+   OJS CSV PARSING  (NEW FORMAT — keyed on submission ID)
+   CSV columns produced by the GitHub Action:
+     ID,Submission ID,Title,Metric Type,File Type,Month,Count
+   - Metric Type: "abstract" -> abstract views ; "galley" -> file downloads
+   - Month: YYYY-MM
+   Falls back to the LEGACY statistics-*.csv layout if the new header is
+   not detected, so older snapshot files keep rendering unchanged.
 ============================================ */
 function parseOJS(csv){
   var lines = csv.split('\n');
-  var dataStart = 0;
-  for (var i=0;i<lines.length;i++){
-    if (lines[i].indexOf(',ID,')!==-1 || lines[i].indexOf('"ID"')!==-1){ dataStart=i+1; break; }
+  var headerIdx = -1, isNew = false;
+  for (var i=0;i<Math.min(lines.length,5);i++){
+    var h = lines[i].toLowerCase();
+    if (h.indexOf('metric type') !== -1 && h.indexOf('submission id') !== -1){ headerIdx=i; isNew=true; break; }
+    if (h.indexOf(',id,')!==-1 || h.indexOf('"id"')!==-1){ headerIdx=i; isNew=false; break; }
   }
+  if (headerIdx === -1) return {};
+  return isNew ? parseOJSNew(lines, headerIdx+1) : parseOJSLegacy(lines, headerIdx+1);
+}
+
+/* NEW format: one row per (submission, metric, month). Robust ID keying. */
+function parseOJSNew(lines, start){
+  var byId = {};
+  for (var i=start;i<lines.length;i++){
+    var line = lines[i].replace(/\r$/,''); if (!line.trim()) continue;
+    var c = parseCSVLine(line); if (c.length < 7) continue;
+    var sid    = clean(c[1]);                  // Submission ID
+    var metric = clean(c[3]).toLowerCase();    // abstract | galley
+    var month  = clean(c[5]);                  // YYYY-MM
+    var count  = parseInt(clean(c[6]),10);     // Count
+    if (!sid || !month || isNaN(count)) continue;
+    if (!byId[sid]) byId[sid] = { views:{}, pdfs:{} };
+    if (metric === 'abstract')    byId[sid].views[month] = (byId[sid].views[month]||0) + count;
+    else if (metric === 'galley') byId[sid].pdfs[month]  = (byId[sid].pdfs[month]||0) + count;
+  }
+  return byId;
+}
+
+/* LEGACY format kept verbatim from the original dashboard. */
+function parseOJSLegacy(lines, start){
   var byId = {}; var titleToId = {};
-  for (var i=dataStart;i<lines.length;i++){
+  for (var i=start;i<lines.length;i++){
     var line = lines[i].trim(); if (!line) continue;
     var cols = parseCSVLine(line); if (cols.length<14) continue;
     var id    = clean(cols[1]);
@@ -739,7 +772,7 @@ function parseOJS(csv){
     var key = normTitle(title);
     if (key) titleToId[key] = id;
   }
-  for (var i=dataStart;i<lines.length;i++){
+  for (var i=start;i<lines.length;i++){
     var line = lines[i].trim(); if (!line) continue;
     var cols = parseCSVLine(line); if (cols.length<14) continue;
     var type     = clean(cols[2]);
@@ -817,7 +850,7 @@ function buildSparkline(countsByYear, color, label){
 }
 
 function buildMonthlySparkline(monthlyData, color, label, containerId){
-  // monthlyData: { 'YYYYMM': count } or array of {period, views}
+  // monthlyData: { 'YYYYMM' or 'YYYY-MM': count } or array of {period, value}
   var keys, vals;
   if (Array.isArray(monthlyData)){
     var sorted = monthlyData.slice().sort(function(a,b){ return a.period.localeCompare(b.period); });
@@ -852,7 +885,7 @@ function buildMonthlySparkline(monthlyData, color, label, containerId){
   var names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var fmtM = function(m){
     if (!m) return '';
-    // Handle YYYY-MM format from Zenodo stats or YYYYMM from OJS
+    // Handle YYYY-MM format from Zenodo/new OJS stats or YYYYMM from legacy OJS
     var yr, mo;
     if (m.indexOf('-') > -1){
       var parts = m.split('-');
@@ -966,6 +999,7 @@ function buildCard(pub, idx){
 
   var citeSpark = pub.countsByYear ? buildSparkline(pub.countsByYear, '#2ecc71', 'Citations by year (OpenAlex)') : '';
   var ojsSpark  = (ojsData && ojsData.views) ? buildMonthlySparkline(ojsData.views, '#1e8bc3', 'Abstract views by month (OJS)') : '';
+  var ojsDlSpark = (ojsData && ojsData.pdfs && sumObj(ojsData.pdfs) > 0) ? buildMonthlySparkline(ojsData.pdfs, '#3498db', 'PDF downloads by month (OJS)') : '';
 
   var footer = '<div class="pub-footer">'
     + '<a href="'+doiUrl+'" target="_blank" class="doi-chip">↗ '+escH(pub.doi)+'</a>'
@@ -980,7 +1014,7 @@ function buildCard(pub, idx){
   return '<div class="pub-item" style="animation-delay:'+(idx*0.07)+'s">'
     + '<div>'
     +   topTags + titleBlock + authorsBlock + actions
-    +   '<div class="metrics-block">' + citeBadges + viewsRow + bskyBadge + citeSpark + ojsSpark + '</div>'
+    +   '<div class="metrics-block">' + citeBadges + viewsRow + bskyBadge + citeSpark + ojsSpark + ojsDlSpark + '</div>'
     +   footer
     + '</div>'
     + '<div class="pub-donut">'
@@ -1198,6 +1232,9 @@ function updateZenodoSummary(){
 
 /* ============================================
    OJS STATS CSV
+   Finds the newest statistics-YYYYMMDD.csv produced by the
+   GitHub Action and parses it. Works with both the NEW
+   ID-keyed format and the LEGACY format (auto-detected in parseOJS).
 ============================================ */
 async function loadOJSStats(){
   var listing = await fetchJSON(STATS_DIR);
@@ -1208,7 +1245,7 @@ async function loadOJSStats(){
   var newest = csvFiles[0];
   var dm = newest.name.match(/statistics-(\d{4})(\d{2})(\d{2})\.csv/);
   if (dm) OJS_FILE_DATE = dm[1]+'-'+dm[2]+'-'+dm[3];
-  var csv = await fetchText(newest.download_url || ('https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/statistics/'+newest.name));
+  var csv = await fetchText(newest.download_url || (STATS_RAW + newest.name));
   if (!csv) return;
   OJS_DATA = parseOJS(csv);
 }
