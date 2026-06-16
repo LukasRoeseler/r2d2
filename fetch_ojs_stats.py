@@ -25,7 +25,6 @@ import urllib.parse
 import urllib.error
 
 OJS_BASE = "https://ejournals.uni-muenster.de/index.php/replicationresearch/api/v1"
-DOIS_FILE = "dois.txt"
 OUT_DIR = "statistics"
 
 # Date window: from the journal's launch (Oct 2025) through today. The journal
@@ -162,29 +161,6 @@ def preflight_check():
     print("Preflight OK — token has stats access.\n")
 
 
-def submission_ids_from_dois(path):
-    """Map the trailing integer of each DOI to a submission ID.
-
-    The dashboard derives the OJS submission id from the digits at the end of
-    the DOI (e.g. 10.5281/.../12345 -> 12345). We do the same here so the CSV
-    keys line up with what the front-end expects.
-    """
-    ids = []
-    if not os.path.exists(path):
-        print("ERROR: %s not found." % path, file=sys.stderr)
-        sys.exit(1)
-    with open(path, encoding="utf-8") as fh:
-        for line in fh:
-            doi = line.strip()
-            if not doi:
-                continue
-            doi = re.sub(r"^https?://doi\.org/", "", doi, flags=re.I)
-            m = re.search(r"(\d+)$", doi)
-            if m:
-                ids.append((m.group(1), doi))
-    return ids
-
-
 def first_locale_value(d):
     """OJS multilingual fields are {locale: value}; pick a sensible one."""
     if isinstance(d, dict):
@@ -292,42 +268,43 @@ def fetch_all_published_dois():
     return ids
 
 
-def update_dois_file(ids, path):
-    """Overwrite dois.txt with the current list of published DOIs.
+def write_publications_json(ids, path="publications.json"):
+    """Write publications.json as [{id, doi}, …] sorted by id.
 
-    Only writes if the content actually changed, to avoid noisy git commits.
-    Returns True if the file was updated.
+    Only overwrites if content changed (avoids noisy commits).
+    Returns True if the file was written.
     """
-    new_content = "\n".join(doi for _, doi in ids) + "\n"
+    import json
+    data = [{"id": int(sid) if sid.isdigit() else sid, "doi": doi}
+            for sid, doi in ids]
+    new_content = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
     existing = ""
     if os.path.exists(path):
         with open(path, encoding="utf-8") as fh:
             existing = fh.read()
     if new_content == existing:
-        print("dois.txt is already up to date (%d DOIs)." % len(ids))
+        print("publications.json is already up to date (%d entries)." % len(ids))
         return False
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(new_content)
-    print("Updated %s with %d DOIs." % (path, len(ids)))
+    print("Wrote publications.json with %d entries." % len(ids))
     return True
 
 
 def main():
     preflight_check()
 
-    # Try to refresh dois.txt from the API first.
-    print("Fetching published DOIs from OJS API...")
+    # Fetch the live list of published submissions from OJS.
+    print("Fetching published submissions from OJS API...")
     live_ids = fetch_all_published_dois()
-    if live_ids:
-        update_dois_file(live_ids, DOIS_FILE)
-        ids = live_ids
-        print("Found %d published submissions via API." % len(ids))
-    else:
-        # API didn't return usable data — fall back to the existing dois.txt.
-        print("WARN: could not fetch DOIs from API; falling back to %s."
-              % DOIS_FILE, file=sys.stderr)
-        ids = submission_ids_from_dois(DOIS_FILE)
-        print("Found %d DOIs in %s" % (len(ids), DOIS_FILE))
+    if not live_ids:
+        print("ERROR: could not fetch any published submissions from the API.",
+              file=sys.stderr)
+        sys.exit(1)
+
+    write_publications_json(live_ids)
+    ids = live_ids
+    print("Found %d published submissions." % len(ids))
 
     os.makedirs(OUT_DIR, exist_ok=True)
     today = datetime.date.today().strftime("%Y%m%d")
