@@ -1,0 +1,46 @@
+name: Update OJS statistics
+
+# Runs on a schedule and on demand. Writes statistics/statistics-YYYYMMDD.csv
+# and commits it so the dashboard (index.html) picks up the newest file.
+on:
+  schedule:
+    # 03:17 UTC every Monday. (Off-the-hour to avoid GitHub's busy scheduling
+    # windows, which can delay or drop on-the-hour jobs.)
+    - cron: "17 3 * * 1"
+  workflow_dispatch: {}   # lets you trigger it manually from the Actions tab
+
+permissions:
+  contents: write          # required so the job can push the new CSV
+
+concurrency:
+  group: ojs-stats
+  cancel-in-progress: false
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch OJS statistics
+        env:
+          OJS_API_KEY: ${{ secrets.OJS_API_KEY }}
+        run: python fetch_ojs_stats.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add statistics/statistics-*.csv
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: update OJS statistics ($(date -u +%Y-%m-%d))"
+            git push
+          fi
