@@ -31,7 +31,7 @@ OUT_DIR = "statistics"
 # Date window: from the journal's launch (Oct 2025) through today. The journal
 # did not exist before October 2025, so there is nothing to query earlier.
 DATE_START = "2025-10-01"
-DATE_END = datetime.date.today().isoformat()
+DATE_END = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
 
 API_KEY = os.environ.get("OJS_API_KEY", "").strip()
 if not API_KEY:
@@ -119,25 +119,43 @@ def preflight_check():
     DOI. The /stats/publications list endpoint requires the same admin/manager
     role the per-article stats endpoints need, so it's a faithful probe.
     """
+    # Token-shape sanity check. OJS API keys are JWTs: three dot-separated
+    # base64url segments (header.payload.signature). A secret that doesn't
+    # look like one was almost certainly truncated or mis-pasted.
+    if API_KEY.count(".") != 2:
+        print("WARNING: OJS_API_KEY does not look like a JWT (expected three "
+              "dot-separated parts). It may be truncated or mis-pasted.",
+              file=sys.stderr)
+
     print("Preflight: checking API token access to stats endpoints...")
     data = api_get("/stats/publications", {"count": 1})
     if data is None:
         print(
-            "\nPREFLIGHT FAILED. The token reached OJS but was refused.\n"
-            "The /submissions and /stats endpoints are restricted to Admin "
-            "and Journal Manager accounts.\n"
-            "Fix checklist:\n"
-            "  1. Generate the API key from a JOURNAL MANAGER (or Admin) "
-            "account in Replication Research\n"
-            "     (User Profile > API Key), and store it as the OJS_API_KEY "
-            "repo secret.\n"
-            "  2. Confirm the secret value has no quotes, spaces, or line "
-            "breaks around it.\n"
-            "  3. If you saw 'api.401' above, api_secret_key may be unset in "
-            "the server's config.inc.php (server admin task).\n"
-            "  4. The script already auto-tried the ?apiToken= fallback for "
-            "the Apache header-stripping case; if that also failed, the cause "
-            "is role/permission, not the header.\n",
+            "\nPREFLIGHT FAILED. The token reached OJS but the call was "
+            "refused.\n"
+            "Since the account is confirmed to be a Journal Manager/Editor, "
+            "role is NOT the cause.\n"
+            "Read the error body printed above and match it below:\n"
+            "\n"
+            "  * Body says 'api.401...'  -> the server is NOT validating the "
+            "token.\n"
+            "      Most likely 'api_secret_key' is unset in the server's "
+            "config.inc.php.\n"
+            "      This is a server-admin task for the team running "
+            "ejournals.uni-muenster.de.\n"
+            "\n"
+            "  * Body says 'api.403...' on BOTH header and ?apiToken= attempts "
+            "above ->\n"
+            "      the token isn't reaching PHP (Apache strips the "
+            "Authorization header, pkp-lib #9320),\n"
+            "      OR the secret value is corrupted (quotes/newline/partial "
+            "copy in the GitHub secret).\n"
+            "      Re-copy the key from User Profile > API Key; if it still "
+            "fails, ask the server admin to enable\n"
+            "      CGIPassAuth / pass the Authorization header to PHP.\n"
+            "\n"
+            "  * No body shown / network error -> connectivity or the API is "
+            "disabled for this journal.\n",
             file=sys.stderr,
         )
         sys.exit(1)
