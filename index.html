@@ -314,7 +314,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 }
 .view-chip .val { font-size: 12px; font-weight: 700; margin-left: 2px; font-variant-numeric: tabular-nums; }
 
-/* ── SPARKLINES ── */
+/* ── SPARKLINES (citations by year — kept as-is) ── */
 .sparkline-wrap { margin-top: 4px; }
 .sparkline-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 4px; }
 .sparkline-svg { display: block; width: 100%; max-width: 440px; height: 40px; }
@@ -325,6 +325,29 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 .spark-dot { opacity: 0; transform-origin: center; animation: popDot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 @keyframes popDot { 0%{opacity:0;transform:scale(0)} 100%{opacity:1;transform:scale(1)} }
 .sparkline-axis { font-size: 9.5px; color: var(--text-muted); display: flex; justify-content: space-between; max-width: 440px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+/* ── COMBINED USAGE CHART (views + downloads, y-axis, hover tooltip) ── */
+.usage-chart-wrap { margin-top: 8px; position: relative; max-width: 460px; }
+.usage-chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.usage-chart-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+.usage-chart-legend { display: flex; gap: 10px; }
+.usage-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-secondary); font-weight: 600; }
+.usage-legend-swatch { width: 14px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+.usage-chart-svg { display: block; width: 100%; overflow: visible; }
+.usage-tooltip {
+  position: absolute; pointer-events: none; opacity: 0; transition: opacity 0.12s;
+  background: #1a1d20; color: #fff; border-radius: 5px;
+  padding: 5px 10px; font-size: 11px; font-weight: 600; white-space: nowrap;
+  font-family: var(--font); line-height: 1.6; z-index: 20;
+  transform: translate(-50%, calc(-100% - 8px));
+}
+.usage-tooltip.visible { opacity: 1; }
+.usage-tooltip::after {
+  content: ''; position: absolute; left: 50%; bottom: -4px;
+  transform: translateX(-50%);
+  border: 4px solid transparent; border-bottom: none;
+  border-top-color: #1a1d20;
+}
 
 /* ── FOOTER LINKS ── */
 .pub-footer {
@@ -849,66 +872,148 @@ function buildSparkline(countsByYear, color, label){
   return '<div class="sparkline-wrap"><div class="sparkline-title">'+label+'</div>'+svg+axis+'</div>';
 }
 
-function buildMonthlySparkline(monthlyData, color, label, containerId){
-  // monthlyData: { 'YYYYMM' or 'YYYY-MM': count } or array of {period, value}
-  var keys, vals;
-  if (Array.isArray(monthlyData)){
-    var sorted = monthlyData.slice().sort(function(a,b){ return a.period.localeCompare(b.period); });
-    keys = sorted.map(function(d){ return d.period; });
-    vals = sorted.map(function(d){ return d.value||d.views||d.downloads||0; });
-  } else {
-    keys = Object.keys(monthlyData).sort();
-    vals = keys.map(function(k){ return monthlyData[k]; });
-  }
-  if (!keys.length) return '';
-  var maxV = Math.max.apply(null, vals);
+function buildUsageChart(viewsByMonth, pdfsByMonth, containerId){
+  /* Merges abstract views (blue) and PDF downloads (teal) into one chart
+     with a y-axis, x-axis labels, legend, and hover tooltip.
+     viewsByMonth / pdfsByMonth: { 'YYYY-MM': count } objects.          */
+
+  // Collect and sort all months present in either dataset.
+  var allKeys = {};
+  Object.keys(viewsByMonth||{}).forEach(function(k){ allKeys[k]=1; });
+  Object.keys(pdfsByMonth||{}).forEach(function(k){ allKeys[k]=1; });
+  var months = Object.keys(allKeys).sort();
+  if (!months.length) return '';
+
+  var views = months.map(function(k){ return (viewsByMonth||{})[k]||0; });
+  var pdfs  = months.map(function(k){ return (pdfsByMonth||{})[k]||0; });
+  var allVals = views.concat(pdfs);
+  var maxV = Math.max.apply(null, allVals);
   if (maxV === 0) return '';
-  var W=440, H=40, pad=5;
-  var n=vals.length, xStep = n>1 ? (W-pad*2)/(n-1) : 0;
-  var points = vals.map(function(v,i){
-    var x = pad+i*xStep, y = H-pad - ((v/maxV)*(H-pad*2));
-    return x.toFixed(1)+','+y.toFixed(1);
-  }).join(' ');
-  var areaPoints = 'M'+pad+','+H+' L' + points.split(' ').join(' L') + ' L'+(pad+(n-1)*xStep).toFixed(1)+','+H+' Z';
-  var uid='g'+Math.random().toString(36).slice(2,7);
-  var clipId = 'c'+uid;
-  var svg = '<svg class="sparkline-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'
-    + '<defs>'
-    +   '<linearGradient id="'+uid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+color+'" stop-opacity="0.3"/><stop offset="100%" stop-color="'+color+'" stop-opacity="0.02"/></linearGradient>'
-    +   '<clipPath id="'+clipId+'"><rect class="spark-area-mask" x="0" y="0" width="'+W+'" height="'+H+'"/></clipPath>'
-    + '</defs>'
-    + '<g clip-path="url(#'+clipId+')">'
-    +   '<path d="'+areaPoints+'" fill="url(#'+uid+')"/>'
-    + '</g>'
-    + '<polyline class="spark-line" points="'+points+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>';
+
+  // Layout: leave left margin for y-axis labels, bottom margin for x-axis.
+  var W=420, H=80, padL=28, padR=8, padT=6, padB=18;
+  var chartW = W - padL - padR;
+  var chartH = H - padT - padB;
+  var n = months.length;
+  var xStep = n > 1 ? chartW / (n-1) : 0;
 
   var names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var fmtM = function(m){
+  function fmtM(m){
     if (!m) return '';
-    // Handle YYYY-MM format from Zenodo/new OJS stats or YYYYMM from legacy OJS
-    var yr, mo;
-    if (m.indexOf('-') > -1){
-      var parts = m.split('-');
-      yr = parts[0]; mo = parseInt(parts[1],10);
-    } else {
-      yr = m.slice(0,4); mo = parseInt(m.slice(4,6),10);
-    }
-    return (names[mo]||'') + " '" + yr.slice(2);
-  };
+    var parts = m.indexOf('-') > -1 ? m.split('-') : [m.slice(0,4), m.slice(4,6)];
+    return names[parseInt(parts[1],10)||0] + " '" + parts[0].slice(2);
+  }
+  function xOf(i){ return padL + i * xStep; }
+  function yOf(v){ return padT + chartH - (v / maxV) * chartH; }
 
-  vals.forEach(function(v,i){
-    var x = pad+i*xStep, y = H-pad-((v/maxV)*(H-pad*2));
-    var delay = (i / Math.max(n-1,1)) * 1.0;
-    svg += '<circle class="spark-dot" style="animation-delay:'+delay.toFixed(2)+'s" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.8" fill="'+color+'"/>';
-    svg += '<title>'+fmtM(keys[i])+': '+v+' view'+(v!==1?'s':'')+'</title>';
-  });
-  svg += '</svg>';
+  function polyline(vals, color){
+    var pts = vals.map(function(v,i){ return xOf(i).toFixed(1)+','+yOf(v).toFixed(1); }).join(' ');
+    var uid = 'u'+Math.random().toString(36).slice(2,7);
+    var clipId = 'cl'+uid;
+    // area fill
+    var areaD = 'M'+padL+','+(padT+chartH)+' L'
+      + vals.map(function(v,i){ return xOf(i).toFixed(1)+','+yOf(v).toFixed(1); }).join(' L')
+      + ' L'+(padL+(n-1)*xStep).toFixed(1)+','+(padT+chartH)+' Z';
+    return '<defs>'
+      + '<linearGradient id="'+uid+'" x1="0" y1="0" x2="0" y2="1">'
+      +   '<stop offset="0%" stop-color="'+color+'" stop-opacity="0.18"/>'
+      +   '<stop offset="100%" stop-color="'+color+'" stop-opacity="0"/>'
+      + '</linearGradient>'
+      + '<clipPath id="'+clipId+'"><rect class="spark-area-mask" x="'+padL+'" y="'+padT+'" width="'+chartW+'" height="'+chartH+'"/></clipPath>'
+      + '</defs>'
+      + '<g clip-path="url(#'+clipId+')"><path d="'+areaD+'" fill="url(#'+uid+')" /></g>'
+      + '<polyline class="spark-line" points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>';
+  }
 
-  var axis = '<div class="sparkline-axis">' + keys.map(function(k,i){
-    return (i===0||i===keys.length-1) ? '<span>'+fmtM(k)+'</span>' : '<span></span>';
-  }).join('') + '</div>';
-  var html = '<div class="sparkline-wrap"><div class="sparkline-title">'+label+'</div>'+svg+axis+'</div>';
-  if (containerId) { var el = document.getElementById(containerId); if (el) el.innerHTML = html; }
+  // Y-axis: 3 gridlines + labels (0, mid, max).
+  var yGridLevels = [0, Math.round(maxV/2), maxV];
+  var gridLines = yGridLevels.map(function(v){
+    var y = yOf(v).toFixed(1);
+    return '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y
+      +'" stroke="#e3e7eb" stroke-width="1"/>'
+      + '<text class="usage-chart-axis-y" x="'+(padL-3)+'" y="'+y
+      +'" text-anchor="end" dominant-baseline="middle" fill="#8990a0" font-size="9">'
+      + v + '</text>';
+  }).join('');
+
+  // X-axis labels: first and last month, plus any that fall on a quarter.
+  var xLabels = months.map(function(m,i){
+    var show = i===0 || i===months.length-1 || m.slice(5)==='01' || m.slice(5)==='04' || m.slice(5)==='07' || m.slice(5)==='10';
+    if (!show) return '';
+    return '<text class="usage-chart-axis-x" x="'+xOf(i).toFixed(1)+'" y="'+(H-3)
+      +'" text-anchor="middle" fill="#8990a0" font-size="9">'+fmtM(m)+'</text>';
+  }).join('');
+
+  // Invisible hit-target bars for hover — one per month, full chart height.
+  var barW = Math.max(8, xStep * 0.9);
+  var hitBars = months.map(function(m,i){
+    var vv=views[i], pp=pdfs[i];
+    return '<rect class="usage-hit" data-month="'+m
+      +'" data-views="'+vv+'" data-pdfs="'+pp
+      +'" x="'+(xOf(i)-barW/2).toFixed(1)+'" y="'+padT
+      +'" width="'+barW.toFixed(1)+'" height="'+chartH
+      +'" fill="transparent" style="cursor:crosshair"/>';
+  }).join('');
+
+  // Hover crosshair line (hidden by default, shown via JS).
+  var crosshair = '<line class="usage-crosshair" x1="0" y1="'+padT+'" x2="0" y2="'+(padT+chartH)
+    +'" stroke="#c5cdd5" stroke-width="1" stroke-dasharray="3,2" style="display:none"/>';
+
+  var svgId = 'uc'+Math.random().toString(36).slice(2,7);
+  var svg = '<svg id="'+svgId+'" class="usage-chart-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'
+    + gridLines
+    + polyline(views, '#1e8bc3')
+    + polyline(pdfs,  '#0ea47a')
+    + xLabels
+    + crosshair
+    + hitBars
+    + '</svg>';
+
+  var tooltipId = 'tt'+Math.random().toString(36).slice(2,7);
+  var html = '<div class="usage-chart-wrap">'
+    + '<div class="usage-chart-header">'
+    +   '<span class="usage-chart-title">Usage by month (OJS)</span>'
+    +   '<span class="usage-chart-legend">'
+    +     '<span class="usage-legend-item"><span class="usage-legend-swatch" style="background:#1e8bc3"></span>Views</span>'
+    +     '<span class="usage-legend-item"><span class="usage-legend-swatch" style="background:#0ea47a"></span>Downloads</span>'
+    +   '</span>'
+    + '</div>'
+    + svg
+    + '<div class="usage-tooltip" id="'+tooltipId+'"></div>'
+    + '</div>';
+
+  // Attach hover behaviour after the element is in the DOM.
+  // We use a MutationObserver to wait for the wrapper to appear.
+  setTimeout(function(){
+    var svgEl = document.getElementById(svgId);
+    var tip   = document.getElementById(tooltipId);
+    if (!svgEl || !tip) return;
+    var crossEl = svgEl.querySelector('.usage-crosshair');
+    svgEl.querySelectorAll('.usage-hit').forEach(function(bar){
+      bar.addEventListener('mouseenter', function(e){
+        var m  = bar.getAttribute('data-month');
+        var vv = bar.getAttribute('data-views');
+        var pp = bar.getAttribute('data-pdfs');
+        tip.innerHTML = '<span style="color:#8ae0ff">'+fmtM(m)+'</span><br>'
+          + '<span style="color:#1e8bc3">●</span> Views: <b>'+Number(vv).toLocaleString('en')+'</b><br>'
+          + '<span style="color:#0ea47a">●</span> Downloads: <b>'+Number(pp).toLocaleString('en')+'</b>';
+        // Position tooltip relative to the wrapper div.
+        var wrapRect = tip.parentElement.getBoundingClientRect();
+        var barRect  = bar.getBoundingClientRect();
+        var cx = barRect.left + barRect.width/2 - wrapRect.left;
+        tip.style.left = cx + 'px';
+        tip.style.top  = (barRect.top - wrapRect.top) + 'px';
+        tip.classList.add('visible');
+        if (crossEl) { crossEl.style.display=''; crossEl.setAttribute('x1',bar.getAttribute('x')); crossEl.setAttribute('x2',bar.getAttribute('x')); var bx=(parseFloat(bar.getAttribute('x'))+parseFloat(bar.getAttribute('width'))/2).toFixed(1); crossEl.setAttribute('x1',bx); crossEl.setAttribute('x2',bx); }
+      });
+      bar.addEventListener('mouseleave', function(){
+        tip.classList.remove('visible');
+        if (crossEl) crossEl.style.display='none';
+      });
+    });
+  }, 0);
+
+  if (containerId){ var el=document.getElementById(containerId); if(el) el.innerHTML=html; }
   return html;
 }
 
@@ -997,9 +1102,8 @@ function buildCard(pub, idx){
     + '<span class="view-chip">⬇ Downloads <span class="val">'+(totalPdfs!==null?fmtNum(totalPdfs):'—')+'</span></span>'
     + '</div>';
 
-  var citeSpark = pub.countsByYear ? buildSparkline(pub.countsByYear, '#2ecc71', 'Citations by year (OpenAlex)') : '';
-  var ojsSpark  = (ojsData && ojsData.views) ? buildMonthlySparkline(ojsData.views, '#1e8bc3', 'Abstract views by month (OJS)') : '';
-  var ojsDlSpark = (ojsData && ojsData.pdfs && sumObj(ojsData.pdfs) > 0) ? buildMonthlySparkline(ojsData.pdfs, '#3498db', 'PDF downloads by month (OJS)') : '';
+  var citeSpark   = pub.countsByYear ? buildSparkline(pub.countsByYear, '#2ecc71', 'Citations by year (OpenAlex)') : '';
+  var ojsUsage    = ojsData ? buildUsageChart(ojsData.views, ojsData.pdfs) : '';
 
   var footer = '<div class="pub-footer">'
     + '<a href="'+doiUrl+'" target="_blank" class="doi-chip">↗ '+escH(pub.doi)+'</a>'
@@ -1014,7 +1118,7 @@ function buildCard(pub, idx){
   return '<div class="pub-item" style="animation-delay:'+(idx*0.07)+'s">'
     + '<div>'
     +   topTags + titleBlock + authorsBlock + actions
-    +   '<div class="metrics-block">' + citeBadges + viewsRow + bskyBadge + citeSpark + ojsSpark + ojsDlSpark + '</div>'
+    +   '<div class="metrics-block">' + citeBadges + viewsRow + bskyBadge + citeSpark + ojsUsage + '</div>'
     +   footer
     + '</div>'
     + '<div class="pub-donut">'
@@ -1361,7 +1465,11 @@ async function loadZenodo(){
     return { period: m, value: communityViewsByMonth[m] };
   });
   if (sparkData.length > 0) {
-    buildMonthlySparkline(sparkData, '#024d94', 'Community views by publication month (Zenodo)', 'z-community-spark');
+    var zViews = {};
+    sparkData.forEach(function(d){ zViews[d.period] = d.value; });
+    var zEl = document.getElementById('z-community-spark');
+    if (zEl) zEl.innerHTML = buildUsageChart(zViews, {}, 'z-community-spark');
+    else buildUsageChart(zViews, {}, 'z-community-spark');
   }
 
   setLoaderStep('stats','done','z');
@@ -1536,7 +1644,7 @@ async function loadAll(){
 
   var ojsEl = document.getElementById('ojs-note');
   if (OJS_FILE_DATE) {
-    ojsEl.innerHTML = 'OJS stats as of <strong>'+OJS_FILE_DATE+'</strong><br><a href="https://github.com/LukasRoeseler/r2d2/tree/main/statistics" target="_blank">Update CSV ↗</a>';
+    ojsEl.innerHTML = 'OJS stats as of <strong>'+OJS_FILE_DATE+'</strong> · updated automatically';
     var f = document.getElementById('footer-update-date');
     if (f) f.textContent = OJS_FILE_DATE;
   } else {
