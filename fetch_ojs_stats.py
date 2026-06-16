@@ -38,30 +38,71 @@ if not API_KEY:
     print("ERROR: OJS_API_KEY environment variable is not set.", file=sys.stderr)
     sys.exit(1)
 
-HEADERS = {
-    "Authorization": "Bearer " + API_KEY,
+BASE_HEADERS = {
     "Accept": "application/json",
     "User-Agent": "r2d2-stats-bot/1.0 (+https://github.com/LukasRoeseler/r2d2)",
 }
 
+# Auth mode: by default OJS expects the token in the Authorization header.
+# Some Apache setups strip that header before it reaches PHP (pkp-lib #9320),
+# which makes every call 403 even with a valid token. In that case OJS still
+# accepts the token as an `apiToken` query parameter, so we fall back to it
+# automatically and remember the choice for the rest of the run.
+USE_QUERY_TOKEN = False
 
-def api_get(path, params=None, retries=3):
-    """GET an OJS API endpoint and return parsed JSON, or None on failure."""
+
+def _build_request(path, params):
+    import json  # noqa: F401  (used by callers)
     url = OJS_BASE + path
-    if params:
-        url += "?" + urllib.parse.urlencode(params)
+    q = dict(params or {})
+    headers = dict(BASE_HEADERS)
+    if USE_QUERY_TOKEN:
+        q["apiToken"] = API_KEY
+    else:
+        headers["Authorization"] = "Bearer " + API_KEY
+    if q:
+        url += "?" + urllib.parse.urlencode(q)
+    return urllib.request.Request(url, headers=headers), url
+
+
+def api_get(path, params=None, retries=3, _allow_fallback=True):
+    """GET an OJS API endpoint and return parsed JSON, or None on failure.
+
+    Prints OJS's actual JSON error body on auth failures so the cause is
+    visible (e.g. api.403.unauthorized vs api.401.invalidToken), and on a
+    header-auth 403 transparently retries once using the apiToken query param.
+    """
+    global USE_QUERY_TOKEN
+    import json
     last_err = None
     for attempt in range(retries):
-        req = urllib.request.Request(url, headers=HEADERS)
+        req, url = _build_request(path, params)
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
-                import json
                 return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
-            last_err = "HTTP %s for %s" % (e.code, url)
-            # 401/403 are auth problems — no point retrying.
+            body = ""
+            try:
+                body = e.read().decode("utf-8", "replace")[:300]
+            except Exception:  # noqa: BLE001
+                pass
+            last_err = "HTTP %s for %s | %s" % (e.code, url, body)
             if e.code in (401, 403):
                 print("AUTH ERROR:", last_err, file=sys.stderr)
+                # If the header method was forbidden, try the query-param
+                # method once — fixes the Apache header-stripping case.
+                if e.code == 403 and not USE_QUERY_TOKEN and _allow_fallback:
+                    print("  -> retrying this request with ?apiToken= "
+                          "query parameter...", file=sys.stderr)
+                    USE_QUERY_TOKEN = True
+                    result = api_get(path, params, retries=1,
+                                     _allow_fallback=False)
+                    if result is not None:
+                        print("  -> query-param auth worked; using it for the "
+                              "rest of the run.", file=sys.stderr)
+                        return result
+                    # Didn't help: revert so we don't mask the real problem.
+                    USE_QUERY_TOKEN = False
                 return None
             time.sleep(2 * (attempt + 1))
         except Exception as e:  # noqa: BLE001
@@ -69,6 +110,38 @@ def api_get(path, params=None, retries=3):
             time.sleep(2 * (attempt + 1))
     print("WARN: giving up:", last_err, file=sys.stderr)
     return None
+
+
+def preflight_check():
+    """Hit a manager-only endpoint once to verify the token has access.
+
+    Fails fast with an actionable message instead of 403-ing through every
+    DOI. The /stats/publications list endpoint requires the same admin/manager
+    role the per-article stats endpoints need, so it's a faithful probe.
+    """
+    print("Preflight: checking API token access to stats endpoints...")
+    data = api_get("/stats/publications", {"count": 1})
+    if data is None:
+        print(
+            "\nPREFLIGHT FAILED. The token reached OJS but was refused.\n"
+            "The /submissions and /stats endpoints are restricted to Admin "
+            "and Journal Manager accounts.\n"
+            "Fix checklist:\n"
+            "  1. Generate the API key from a JOURNAL MANAGER (or Admin) "
+            "account in Replication Research\n"
+            "     (User Profile > API Key), and store it as the OJS_API_KEY "
+            "repo secret.\n"
+            "  2. Confirm the secret value has no quotes, spaces, or line "
+            "breaks around it.\n"
+            "  3. If you saw 'api.401' above, api_secret_key may be unset in "
+            "the server's config.inc.php (server admin task).\n"
+            "  4. The script already auto-tried the ?apiToken= fallback for "
+            "the Apache header-stripping case; if that also failed, the cause "
+            "is role/permission, not the header.\n",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    print("Preflight OK — token has stats access.\n")
 
 
 def submission_ids_from_dois(path):
@@ -150,6 +223,7 @@ def monthly_timeline(sub_id, metric):
 
 
 def main():
+    preflight_check()
     ids = submission_ids_from_dois(DOIS_FILE)
     print("Found %d DOIs in %s" % (len(ids), DOIS_FILE))
 
