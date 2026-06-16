@@ -499,7 +499,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
           <div class="loader-center">R2D2</div>
         </div>
         <div class="loader-steps" id="loader-steps">
-          <div class="loader-step" data-step="dois"><span class="step-dot"></span>Reading DOI list from GitHub</div>
+          <div class="loader-step" data-step="dois"><span class="step-dot"></span>Reading publication list from GitHub</div>
           <div class="loader-step" data-step="meta"><span class="step-dot"></span>Fetching article metadata from OJS</div>
           <div class="loader-step" data-step="cites"><span class="step-dot"></span>Loading citations (OpenAlex, DataCite)</div>
           <div class="loader-step" data-step="ojs"><span class="step-dot"></span>Loading OJS usage statistics</div>
@@ -566,7 +566,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 /* ============================================
    CONFIG
 ============================================ */
-var DOIS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/dois.txt';
+var PUBS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/publications.json';
 var STATS_DIR = 'https://api.github.com/repos/LukasRoeseler/r2d2/contents/statistics';
 var STATS_RAW = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/statistics/';
 var OJS_BASE  = 'https://ejournals.uni-muenster.de/index.php/replicationresearch/api/v1';
@@ -1528,7 +1528,7 @@ async function loadAll(){
   var btn = document.getElementById('refresh-btn');
   btn.disabled = true; btn.textContent = '… Loading';
   document.getElementById('status-dot').className = 'status-dot loading';
-  document.getElementById('status-text').textContent = 'Loading DOI list…';
+  document.getElementById('status-text').textContent = 'Loading publication list…';
   document.getElementById('pub-list').innerHTML = '';
   document.getElementById('ojs-note').textContent = 'OJS stats: loading…';
   ALL_PUBS = []; OJS_DATA = {}; OJS_FILE_DATE = null;
@@ -1539,14 +1539,14 @@ async function loadAll(){
   setLoaderStep('dois','active');
   setLoaderProgress(5);
 
-  var [doiText, _] = await Promise.all([
-    fetchText(DOIS_URL),
+  var [pubsData, _] = await Promise.all([
+    fetchJSON(PUBS_URL),
     loadSectionsAndCategories()
   ]);
 
-  if (!doiText){
+  if (!pubsData || !Array.isArray(pubsData) || !pubsData.length){
     document.getElementById('status-dot').className = 'status-dot error';
-    document.getElementById('status-text').textContent = 'Could not load DOI list.';
+    document.getElementById('status-text').textContent = 'Could not load publication list.';
     setLoaderStep('dois','');
     btn.disabled = false; btn.textContent = '↺ Refresh'; return;
   }
@@ -1555,11 +1555,15 @@ async function loadAll(){
   setLoaderStep('meta','active');
   setLoaderProgress(25);
 
-  var rawDois = doiText.split('\n').map(function(l){ return l.trim().replace(/^https?:\/\/doi\.org\//i,''); }).filter(function(l){ return l.length>0; });
-  document.getElementById('status-text').textContent = 'Fetching metadata from OJS for '+rawDois.length+' publications…';
-  document.getElementById('sum-pubs').textContent = rawDois.length;
+  document.getElementById('status-text').textContent = 'Fetching metadata from OJS for '+pubsData.length+' publications…';
+  document.getElementById('sum-pubs').textContent = pubsData.length;
 
-  ALL_PUBS = rawDois.map(makePub);
+  // Build pub objects directly from {id, doi} — no parsing needed.
+  ALL_PUBS = pubsData.map(function(p){
+    var pub = makePub(p.doi);
+    pub.ojsId = String(p.id);
+    return pub;
+  });
 
   var ojsPromises = ALL_PUBS.map(function(pub){
     if (!pub.ojsId) return Promise.resolve();
