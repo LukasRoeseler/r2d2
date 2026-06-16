@@ -37,10 +37,10 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add statistics/statistics-*.csv
+          git add statistics/statistics-*.csv dois.txt
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "chore: update OJS statistics ($(date -u +%Y-%m-%d))"
+            git commit -m "chore: update OJS statistics and DOI list ($(date -u +%Y-%m-%d))"
             git push
           fi
