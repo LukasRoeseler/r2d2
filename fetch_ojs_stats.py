@@ -240,10 +240,94 @@ def monthly_timeline(sub_id, metric):
     return out
 
 
+def fetch_all_published_dois():
+    """Fetch every published submission DOI from the OJS API.
+
+    Uses the /submissions endpoint with status=published, paging through all
+    results. Returns a list of (submission_id_str, doi_str) tuples, sorted by
+    submission ID ascending. Falls back gracefully if the endpoint is
+    unavailable (returns empty list so the caller can fall back to dois.txt).
+    """
+    ids = []
+    offset = 0
+    page_size = 100
+    while True:
+        data = api_get("/submissions", {
+            "status": "published",
+            "count": page_size,
+            "offset": offset,
+        })
+        if not data:
+            break
+        items = data.get("items") or []
+        for sub in items:
+            sub_id = str(sub.get("id", ""))
+            if not sub_id:
+                continue
+            # Prefer the DOI from the current publication.
+            doi = None
+            pubs = sub.get("publications") or []
+            cur_id = sub.get("currentPublicationId")
+            pub = next((p for p in pubs if p.get("id") == cur_id),
+                       pubs[0] if pubs else None)
+            if pub:
+                doi = pub.get("doiObject", {}).get("doi") if pub.get("doiObject") else None
+                if not doi:
+                    doi = pub.get("pub-id::doi") or pub.get("doi") or None
+            if not doi:
+                # Fall back to extracting from urlPublished / _href
+                url = (pub or {}).get("urlPublished") or sub.get("_href") or ""
+                m = re.search(r"10\.\d{4,}/\S+", url)
+                if m:
+                    doi = m.group(0).rstrip(".,;)")
+            if doi:
+                doi = re.sub(r"^https?://doi\.org/", "", doi, flags=re.I).strip()
+                ids.append((sub_id, doi))
+        total = data.get("itemsMax", 0)
+        offset += len(items)
+        if not items or offset >= total:
+            break
+        time.sleep(0.2)
+    ids.sort(key=lambda x: int(x[0]) if x[0].isdigit() else 0)
+    return ids
+
+
+def update_dois_file(ids, path):
+    """Overwrite dois.txt with the current list of published DOIs.
+
+    Only writes if the content actually changed, to avoid noisy git commits.
+    Returns True if the file was updated.
+    """
+    new_content = "\n".join(doi for _, doi in ids) + "\n"
+    existing = ""
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            existing = fh.read()
+    if new_content == existing:
+        print("dois.txt is already up to date (%d DOIs)." % len(ids))
+        return False
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(new_content)
+    print("Updated %s with %d DOIs." % (path, len(ids)))
+    return True
+
+
 def main():
     preflight_check()
-    ids = submission_ids_from_dois(DOIS_FILE)
-    print("Found %d DOIs in %s" % (len(ids), DOIS_FILE))
+
+    # Try to refresh dois.txt from the API first.
+    print("Fetching published DOIs from OJS API...")
+    live_ids = fetch_all_published_dois()
+    if live_ids:
+        update_dois_file(live_ids, DOIS_FILE)
+        ids = live_ids
+        print("Found %d published submissions via API." % len(ids))
+    else:
+        # API didn't return usable data — fall back to the existing dois.txt.
+        print("WARN: could not fetch DOIs from API; falling back to %s."
+              % DOIS_FILE, file=sys.stderr)
+        ids = submission_ids_from_dois(DOIS_FILE)
+        print("Found %d DOIs in %s" % (len(ids), DOIS_FILE))
 
     os.makedirs(OUT_DIR, exist_ok=True)
     today = datetime.date.today().strftime("%Y%m%d")
