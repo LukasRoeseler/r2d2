@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Fetch per-article, per-month OJS usage statistics (abstract views + galley/PDF
-downloads) for every DOI listed in dois.txt, and write them to
+downloads) for every published article, and write them to
 statistics/statistics-YYYYMMDD.csv in the format the R2D2 dashboard reads:
 
     ID,Submission ID,Title,Metric Type,File Type,Month,Count
@@ -173,17 +173,28 @@ def first_locale_value(d):
     return d or ""
 
 
-def get_title(sub_id):
-    """Fetch a human-readable title for a submission (best effort)."""
+def get_submission_meta(sub_id):
+    """Return (title, doi) for a submission in a single API call."""
     data = api_get("/submissions/%s" % sub_id)
     if not data:
-        return ""
+        return "", ""
     pubs = data.get("publications") or []
     cur_id = data.get("currentPublicationId")
-    pub = next((p for p in pubs if p.get("id") == cur_id), pubs[0] if pubs else None)
+    pub = next((p for p in pubs if p.get("id") == cur_id),
+               pubs[0] if pubs else None)
     if not pub:
-        return ""
-    return str(first_locale_value(pub.get("title"))).strip()
+        return "", ""
+    title = str(first_locale_value(pub.get("title") or "")).strip()
+    doi_obj = pub.get("doiObject") or {}
+    doi = (doi_obj.get("doi") if isinstance(doi_obj, dict) else None) \
+        or pub.get("pub-id::doi") or pub.get("doi") or ""
+    if not doi:
+        url = pub.get("urlPublished") or data.get("_href") or ""
+        m = re.search(r"10\.\d{4,}/\S+", url)
+        if m:
+            doi = m.group(0).rstrip(".,;)")
+    doi = re.sub(r"^https?://doi\.org/", "", str(doi), flags=re.I).strip()
+    return title, doi
 
 
 def monthly_timeline(sub_id, metric):
@@ -217,55 +228,54 @@ def monthly_timeline(sub_id, metric):
 
 
 def fetch_all_published_dois():
-    """Fetch every published submission DOI from the OJS API.
+    """Fetch every published submission ID from /stats/publications (which we
+    know works), then retrieve the DOI for each from /submissions/{id}.
 
-    Uses the /submissions endpoint with status=published, paging through all
-    results. Returns a list of (submission_id_str, doi_str) tuples, sorted by
-    submission ID ascending. Falls back gracefully if the endpoint is
-    unavailable (returns empty list so the caller can fall back to dois.txt).
+    Returns a list of (submission_id_str, doi_str) tuples sorted by ID.
+    Uses the stats list endpoint — no separate /submissions list call needed,
+    avoiding the unclear status-filter behaviour of that endpoint.
     """
-    ids = []
+    # Step 1: collect all submission IDs from the stats endpoint.
+    sub_ids = []
     offset = 0
     page_size = 100
     while True:
-        data = api_get("/submissions", {
-            "status": "published",
+        data = api_get("/stats/publications", {
             "count": page_size,
             "offset": offset,
+            "dateStart": DATE_START,
+            "dateEnd": DATE_END,
         })
         if not data:
             break
         items = data.get("items") or []
-        for sub in items:
-            sub_id = str(sub.get("id", ""))
-            if not sub_id:
-                continue
-            # Prefer the DOI from the current publication.
-            doi = None
-            pubs = sub.get("publications") or []
-            cur_id = sub.get("currentPublicationId")
-            pub = next((p for p in pubs if p.get("id") == cur_id),
-                       pubs[0] if pubs else None)
-            if pub:
-                doi = pub.get("doiObject", {}).get("doi") if pub.get("doiObject") else None
-                if not doi:
-                    doi = pub.get("pub-id::doi") or pub.get("doi") or None
-            if not doi:
-                # Fall back to extracting from urlPublished / _href
-                url = (pub or {}).get("urlPublished") or sub.get("_href") or ""
-                m = re.search(r"10\.\d{4,}/\S+", url)
-                if m:
-                    doi = m.group(0).rstrip(".,;)")
-            if doi:
-                doi = re.sub(r"^https?://doi\.org/", "", doi, flags=re.I).strip()
-                ids.append((sub_id, doi))
+        for item in items:
+            pub = item.get("publication") or {}
+            sid = str(pub.get("id") or item.get("submissionId") or "")
+            if sid and sid not in sub_ids:
+                sub_ids.append(sid)
         total = data.get("itemsMax", 0)
         offset += len(items)
         if not items or offset >= total:
             break
         time.sleep(0.2)
+
+    if not sub_ids:
+        return []
+
+    # Step 2: for each submission ID fetch DOI from /submissions/{id}.
+    # (Title is fetched in the same call inside the main loop via
+    # get_submission_meta, so we just collect DOIs here.)
+    ids = []
+    for sid in sub_ids:
+        _, doi = get_submission_meta(sid)
+        if doi:
+            ids.append((sid, doi))
+        time.sleep(0.15)
+
     ids.sort(key=lambda x: int(x[0]) if x[0].isdigit() else 0)
     return ids
+
 
 
 def write_publications_json(ids, path="publications.json"):
@@ -313,7 +323,7 @@ def main():
     rows = []
     row_id = 0
     for sub_id, doi in ids:
-        title = get_title(sub_id)
+        title, _ = get_submission_meta(sub_id)
         abstract = monthly_timeline(sub_id, "abstract")
         galley = monthly_timeline(sub_id, "galley")
 
