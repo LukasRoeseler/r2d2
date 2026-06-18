@@ -349,6 +349,40 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
   border-top-color: #1a1d20;
 }
 
+/* ── SUBMISSIONS TAB ── */
+.subs-block { margin-bottom: 34px; }
+.subs-block-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; letter-spacing: -0.01em; }
+.subs-count { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: 4px; }
+.subs-map-note { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+
+/* monthly bar chart */
+.subs-bars { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: 0 2px; border-bottom: 1px solid var(--border-mid); position: relative; }
+.subs-bar-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; position: relative; min-width: 0; }
+.subs-bar { width: 100%; max-width: 38px; background: linear-gradient(180deg, var(--r2-blue), var(--r2-blue-dark)); border-radius: 3px 3px 0 0; transition: opacity 0.15s; cursor: default; min-height: 2px; position: relative; }
+.subs-bar-col:hover .subs-bar { opacity: 0.78; }
+.subs-bar-val { font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+.subs-bar-labels { display: flex; gap: 4px; padding: 6px 2px 0; }
+.subs-bar-label { flex: 1; text-align: center; font-size: 9px; color: var(--text-muted); font-variant-numeric: tabular-nums; min-width: 0; overflow: hidden; }
+
+/* timeline list */
+.subs-tl-item { display: grid; grid-template-columns: 92px 1fr; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border); align-items: baseline; opacity: 0; transform: translateY(6px); animation: fadeUp 0.3s forwards; }
+.subs-tl-date { font-size: 11px; font-weight: 600; color: var(--r2-blue-deep); font-family: var(--font-mono); white-space: nowrap; }
+.subs-tl-title { font-size: 14px; color: var(--text); line-height: 1.4; text-decoration: none; }
+a.subs-tl-title:hover { color: var(--r2-blue); }
+.subs-tl-nodate { color: var(--text-muted); font-style: italic; }
+
+/* world map */
+.subs-map-svg { width: 100%; max-width: 640px; height: auto; display: block; }
+.subs-map-country { fill: var(--bg-chip); stroke: #fff; stroke-width: 0.4; transition: fill 0.15s; }
+.subs-map-country.has-data { cursor: pointer; }
+.subs-map-country.has-data:hover { fill: var(--r2-blue-deep) !important; }
+.subs-country-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 14px; }
+.subs-cl-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); }
+.subs-cl-swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+.subs-cl-count { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.subs-map-scale { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 10px; color: var(--text-muted); }
+.subs-map-scale-grad { width: 120px; height: 8px; border-radius: 2px; background: linear-gradient(90deg, #d4e9f5, #1e8bc3, #0d4f7a); }
+
 /* ── FOOTER LINKS ── */
 .pub-footer {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -444,6 +478,14 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
       </div>
     </div>
 
+    <div id="sidebar-subs-stats" style="display:none">
+      <div class="stat-row"><span class="stat-label">Total submissions</span><span class="stat-value" id="s-sum-total">—</span></div>
+      <div class="stat-row"><span class="stat-label">Countries</span><span class="stat-value" id="s-sum-countries">—</span></div>
+      <div class="stat-row"><span class="stat-label">First submission</span><span class="stat-value" id="s-sum-first" style="font-size:13px">—</span></div>
+      <div class="stat-row"><span class="stat-label">Latest submission</span><span class="stat-value" id="s-sum-latest" style="font-size:13px">—</span></div>
+      <div class="stat-row"><span class="stat-label">Top country</span><span class="stat-value" id="s-sum-topcountry" style="font-size:13px">—</span></div>
+    </div>
+
     <div class="ojs-note" id="ojs-note">OJS stats: loading…</div>
     <button class="refresh-btn" id="refresh-btn" onclick="handleRefresh()">↺ Refresh</button>
 
@@ -465,12 +507,19 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
       <div class="legend-item"><span class="legend-dot" style="background:#1185fe"></span>Bluesky (social mentions)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#9b59b6"></span>Altmetric (badge)</div>
     </div>
+    <div class="source-legend" id="legend-subs" style="display:none">
+      <div class="legend-title">Data sources</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#1e8bc3"></span>OJS REST API (submissions, dates)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#0ea47a"></span>OJS author records (countries)</div>
+      <div class="legend-item" style="margin-top:8px;font-size:10px;color:var(--text-muted)">Country data reflects what authors entered at registration; some may be missing.</div>
+    </div>
   </aside>
 
   <main>
     <!-- TABS -->
     <div class="tabs-bar">
       <button class="tab-btn active" id="tab-ojs" onclick="switchTab('ojs')">Published Articles</button>
+      <button class="tab-btn" id="tab-subs" onclick="switchTab('subs')">Submissions</button>
       <button class="tab-btn" id="tab-zenodo" onclick="switchTab('zenodo')">R2 Zenodo Community</button>
     </div>
 
@@ -508,6 +557,58 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
       </div>
 
       <div id="pub-list"></div>
+    </div>
+
+    <!-- ── TAB: SUBMISSIONS ── -->
+    <div class="tab-panel" id="panel-subs">
+      <div class="section-header">
+        <h2 class="section-title">Submissions over time</h2>
+        <div class="sort-row">
+          <span class="sort-label">Sort:</span>
+          <button class="sort-btn active" id="ssort-newest" onclick="setSSort('newest')">Newest</button>
+          <button class="sort-btn" id="ssort-oldest" onclick="setSSort('oldest')">Oldest</button>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <span class="status-dot loading" id="s-status-dot"></span>
+        <span id="s-status-text">Loading submissions…</span>
+      </div>
+
+      <div class="loader-wrap" id="s-loader-wrap">
+        <div class="loader-orbit">
+          <div class="orbit-dot"></div><div class="orbit-dot"></div>
+          <div class="orbit-dot"></div><div class="orbit-dot"></div>
+          <div class="loader-center" style="font-size:15px">subs</div>
+        </div>
+        <div class="loader-steps">
+          <div class="loader-step" data-sstep="fetch"><span class="step-dot"></span>Loading submission list from GitHub</div>
+          <div class="loader-step" data-sstep="render"><span class="step-dot"></span>Building charts &amp; map</div>
+        </div>
+        <div class="loader-progress"><div class="loader-progress-bar" id="s-loader-progress-bar"></div></div>
+      </div>
+
+      <div id="subs-content" style="display:none">
+        <!-- Submissions per month -->
+        <div class="subs-block">
+          <div class="subs-block-title">Submissions per month</div>
+          <div id="subs-month-chart"></div>
+        </div>
+
+        <!-- Country map -->
+        <div class="subs-block">
+          <div class="subs-block-title">Authors by country</div>
+          <div class="subs-map-note" id="subs-map-note"></div>
+          <div id="subs-map"></div>
+          <div id="subs-country-legend" class="subs-country-legend"></div>
+        </div>
+
+        <!-- Timeline list -->
+        <div class="subs-block">
+          <div class="subs-block-title">All submissions <span id="subs-count" class="subs-count"></span></div>
+          <div id="subs-timeline"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ── TAB: ZENODO COMMUNITY ── -->
@@ -553,7 +654,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 </div>
 
 <footer class="site-footer">
-  <span>Replication Research Dissemination Dashboard <strong>v0.2</strong></span>
+  <span>Replication Research Dissemination Dashboard <strong>v0.3</strong></span>
   <span class="footer-sep">·</span>
   <span><a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></span>
   <span class="footer-sep">·</span>
@@ -567,6 +668,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
    CONFIG
 ============================================ */
 var PUBS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/publications.json';
+var SUBS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/submissions.json';
 var STATS_DIR = 'https://api.github.com/repos/LukasRoeseler/r2d2/contents/statistics';
 var STATS_RAW = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/statistics/';
 var OJS_BASE  = 'https://ejournals.uni-muenster.de/index.php/replicationresearch/api/v1';
@@ -586,6 +688,10 @@ var currentSort = 'newest';
 var ALL_ZENODO = [];
 var ZENODO_LOADED = false;
 var currentZSort = 'newest';
+
+var SUBS_DATA = null;
+var SUBS_LOADED = false;
+var currentSSort = 'newest';
 
 var ACTIVE_TAB = 'ojs';
 
@@ -637,25 +743,27 @@ function fmtDate(iso){
 ============================================ */
 function switchTab(tab){
   ACTIVE_TAB = tab;
-  document.getElementById('tab-ojs').classList.toggle('active', tab==='ojs');
-  document.getElementById('tab-zenodo').classList.toggle('active', tab==='zenodo');
-  document.getElementById('panel-ojs').classList.toggle('active', tab==='ojs');
-  document.getElementById('panel-zenodo').classList.toggle('active', tab==='zenodo');
+  ['ojs','subs','zenodo'].forEach(function(t){
+    document.getElementById('tab-'+t).classList.toggle('active', tab===t);
+    document.getElementById('panel-'+t).classList.toggle('active', tab===t);
+  });
 
   // Sidebar stats
   document.getElementById('sidebar-ojs-stats').style.display = tab==='ojs' ? '' : 'none';
+  document.getElementById('sidebar-subs-stats').style.display = tab==='subs' ? '' : 'none';
   document.getElementById('sidebar-zenodo-stats').style.display = tab==='zenodo' ? '' : 'none';
   document.getElementById('legend-ojs').style.display = tab==='ojs' ? '' : 'none';
+  document.getElementById('legend-subs').style.display = tab==='subs' ? '' : 'none';
   document.getElementById('legend-zenodo').style.display = tab==='zenodo' ? '' : 'none';
   document.getElementById('ojs-note').style.display = tab==='ojs' ? '' : 'none';
 
-  if (tab==='zenodo' && !ZENODO_LOADED) {
-    loadZenodo();
-  }
+  if (tab==='zenodo' && !ZENODO_LOADED) loadZenodo();
+  if (tab==='subs' && !SUBS_LOADED) loadSubmissions();
 }
 
 function handleRefresh(){
   if (ACTIVE_TAB === 'ojs') loadAll();
+  else if (ACTIVE_TAB === 'subs') loadSubmissions();
   else loadZenodo();
 }
 
@@ -1374,6 +1482,256 @@ function showLoader(show, wrapperId){
   wrapperId = wrapperId || 'loader-wrap';
   var l = document.getElementById(wrapperId);
   if (l) l.classList.toggle('hidden', !show);
+}
+
+/* ============================================
+   SUBMISSIONS TAB
+============================================ */
+var COUNTRY_NAMES = {
+  AF:'Afghanistan',AL:'Albania',DZ:'Algeria',AR:'Argentina',AM:'Armenia',AU:'Australia',AT:'Austria',AZ:'Azerbaijan',
+  BH:'Bahrain',BD:'Bangladesh',BY:'Belarus',BE:'Belgium',BO:'Bolivia',BA:'Bosnia and Herzegovina',BR:'Brazil',BG:'Bulgaria',
+  KH:'Cambodia',CM:'Cameroon',CA:'Canada',CL:'Chile',CN:'China',CO:'Colombia',CR:'Costa Rica',HR:'Croatia',CU:'Cuba',CY:'Cyprus',CZ:'Czechia',
+  DK:'Denmark',DO:'Dominican Republic',EC:'Ecuador',EG:'Egypt',EE:'Estonia',ET:'Ethiopia',
+  FI:'Finland',FR:'France',GE:'Georgia',DE:'Germany',GH:'Ghana',GR:'Greece',GT:'Guatemala',
+  HK:'Hong Kong',HU:'Hungary',IS:'Iceland',IN:'India',ID:'Indonesia',IR:'Iran',IQ:'Iraq',IE:'Ireland',IL:'Israel',IT:'Italy',
+  JM:'Jamaica',JP:'Japan',JO:'Jordan',KZ:'Kazakhstan',KE:'Kenya',KR:'South Korea',KW:'Kuwait',
+  LV:'Latvia',LB:'Lebanon',LT:'Lithuania',LU:'Luxembourg',MY:'Malaysia',MT:'Malta',MX:'Mexico',MD:'Moldova',MA:'Morocco',
+  NP:'Nepal',NL:'Netherlands',NZ:'New Zealand',NG:'Nigeria',MK:'North Macedonia',NO:'Norway',
+  OM:'Oman',PK:'Pakistan',PS:'Palestine',PA:'Panama',PE:'Peru',PH:'Philippines',PL:'Poland',PT:'Portugal',QA:'Qatar',
+  RO:'Romania',RU:'Russia',SA:'Saudi Arabia',RS:'Serbia',SG:'Singapore',SK:'Slovakia',SI:'Slovenia',ZA:'South Africa',ES:'Spain',LK:'Sri Lanka',SE:'Sweden',CH:'Switzerland',
+  TW:'Taiwan',TZ:'Tanzania',TH:'Thailand',TN:'Tunisia',TR:'Türkiye',UG:'Uganda',UA:'Ukraine',AE:'United Arab Emirates',GB:'United Kingdom',US:'United States',UY:'Uruguay',
+  UZ:'Uzbekistan',VE:'Venezuela',VN:'Vietnam',ZM:'Zambia',ZW:'Zimbabwe'
+};
+function countryName(code){ return COUNTRY_NAMES[code] || code; }
+
+function setSSort(mode){
+  currentSSort = mode;
+  ['newest','oldest'].forEach(function(m){
+    var el = document.getElementById('ssort-'+m);
+    if (el) el.classList.toggle('active', m===mode);
+  });
+  renderSubsTimeline();
+}
+
+async function loadSubmissions(){
+  SUBS_LOADED = true;
+  var btn = document.getElementById('refresh-btn');
+  btn.disabled = true; btn.textContent = '… Loading';
+
+  document.getElementById('s-status-dot').className = 'status-dot loading';
+  document.getElementById('s-status-text').textContent = 'Loading submissions…';
+  document.getElementById('subs-content').style.display = 'none';
+  showLoader(true, 's-loader-wrap');
+  setLoaderStep('fetch','active','s');
+  setLoaderProgress(15, 's-loader-progress-bar');
+
+  var data = await fetchJSON(SUBS_URL);
+
+  if (!data || !data.submissions){
+    showLoader(false, 's-loader-wrap');
+    document.getElementById('s-status-dot').className = 'status-dot error';
+    document.getElementById('s-status-text').textContent =
+      'Could not load submissions.json — run the GitHub Action to generate it.';
+    btn.disabled = false; btn.textContent = '↺ Refresh';
+    return;
+  }
+
+  SUBS_DATA = data;
+  setLoaderStep('fetch','done','s');
+  setLoaderStep('render','active','s');
+  setLoaderProgress(55, 's-loader-progress-bar');
+
+  // Sidebar summary
+  var subs = data.submissions || [];
+  var dated = subs.filter(function(s){ return s.dateSubmitted; });
+  document.getElementById('s-sum-total').textContent = fmtNum(subs.length);
+  var countryCount = Object.keys(data.byCountry||{}).length;
+  document.getElementById('s-sum-countries').textContent = fmtNum(countryCount);
+  if (dated.length){
+    document.getElementById('s-sum-first').textContent  = fmtDate(dated[0].dateSubmitted);
+    document.getElementById('s-sum-latest').textContent = fmtDate(dated[dated.length-1].dateSubmitted);
+  }
+  var top = Object.keys(data.byCountry||{}).sort(function(a,b){ return data.byCountry[b]-data.byCountry[a]; })[0];
+  document.getElementById('s-sum-topcountry').textContent = top ? countryName(top) : '—';
+
+  renderSubsMonthChart();
+  renderSubsTimeline();
+  await renderSubsMap();
+
+  setLoaderStep('render','done','s');
+  setLoaderProgress(100, 's-loader-progress-bar');
+  await new Promise(function(r){ setTimeout(r, 200); });
+  showLoader(false, 's-loader-wrap');
+  document.getElementById('subs-content').style.display = '';
+
+  document.getElementById('s-status-dot').className = 'status-dot done';
+  document.getElementById('s-status-text').textContent =
+    subs.length + ' submissions · data generated ' + (data.generated || '—');
+
+  btn.disabled = false; btn.textContent = '↺ Refresh';
+}
+
+function renderSubsMonthChart(){
+  var byMonth = (SUBS_DATA && SUBS_DATA.byMonth) || {};
+  var months = Object.keys(byMonth).sort();
+  var el = document.getElementById('subs-month-chart');
+  if (!months.length){ el.innerHTML = '<div style="color:var(--text-muted);font-size:12px">No dated submissions.</div>'; return; }
+
+  // Fill gaps between first and last month so the timeline is continuous.
+  function addMonth(ym, n){
+    var y=parseInt(ym.slice(0,4),10), m=parseInt(ym.slice(5,7),10)-1+n;
+    y += Math.floor(m/12); m = ((m%12)+12)%12;
+    return y + '-' + String(m+1).padStart(2,'0');
+  }
+  var full = [months[0]]; var guard=0;
+  while (full[full.length-1] !== months[months.length-1] && guard++ < 240){
+    full.push(addMonth(full[full.length-1], 1));
+  }
+  var vals = full.map(function(m){ return byMonth[m]||0; });
+  var maxV = Math.max.apply(null, vals) || 1;
+
+  var names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function lbl(m){ return names[parseInt(m.slice(5,7),10)-1] + " '" + m.slice(2,4); }
+
+  var bars = full.map(function(m,i){
+    var v = vals[i];
+    var h = (v/maxV)*120;
+    return '<div class="subs-bar-col" title="'+lbl(m)+': '+v+' submission'+(v!==1?'s':'')+'">'
+      + (v>0 ? '<span class="subs-bar-val">'+v+'</span>' : '')
+      + '<div class="subs-bar" style="height:'+h.toFixed(1)+'px"></div>'
+      + '</div>';
+  }).join('');
+  var labels = full.map(function(m,i){
+    var show = full.length <= 14 || i===0 || i===full.length-1 || m.slice(5)==='01';
+    return '<div class="subs-bar-label">'+(show?lbl(m):'')+'</div>';
+  }).join('');
+
+  el.innerHTML = '<div class="subs-bars">'+bars+'</div><div class="subs-bar-labels">'+labels+'</div>';
+}
+
+function renderSubsTimeline(){
+  var subs = ((SUBS_DATA && SUBS_DATA.submissions) || []).slice();
+  subs.sort(function(a,b){
+    var da=a.dateSubmitted||'', db=b.dateSubmitted||'';
+    return currentSSort==='oldest' ? da.localeCompare(db) : db.localeCompare(da);
+  });
+  document.getElementById('subs-count').textContent = '(' + subs.length + ')';
+  var el = document.getElementById('subs-timeline');
+  if (!subs.length){ el.innerHTML = '<div style="color:var(--text-muted);font-size:12px">No submissions found.</div>'; return; }
+
+  el.innerHTML = subs.map(function(s,i){
+    var dateTxt = s.dateSubmitted ? fmtDate(s.dateSubmitted) : '<span class="subs-tl-nodate">no date</span>';
+    var titleHtml = s.doi
+      ? '<a href="https://doi.org/'+escH(s.doi)+'" target="_blank" class="subs-tl-title">'+escH(s.title||('Submission #'+s.id))+'</a>'
+      : '<span class="subs-tl-title">'+escH(s.title||('Submission #'+s.id))+'</span>';
+    return '<div class="subs-tl-item" style="animation-delay:'+(Math.min(i,30)*0.02)+'s">'
+      + '<div class="subs-tl-date">'+dateTxt+'</div>'
+      + '<div>'+titleHtml+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+async function renderSubsMap(){
+  var byCountry = (SUBS_DATA && SUBS_DATA.byCountry) || {};
+  var codes = Object.keys(byCountry);
+  var noteEl = document.getElementById('subs-map-note');
+  var mapEl = document.getElementById('subs-map');
+  var legendEl = document.getElementById('subs-country-legend');
+
+  if (!codes.length){
+    noteEl.textContent = 'No author country data available.';
+    mapEl.innerHTML = ''; legendEl.innerHTML = '';
+    return;
+  }
+
+  var total = codes.reduce(function(s,c){ return s+byCountry[c]; },0);
+  var maxC = Math.max.apply(null, codes.map(function(c){ return byCountry[c]; }));
+  noteEl.textContent = total + ' author' + (total!==1?'s':'') + ' across ' + codes.length + ' countr' + (codes.length!==1?'ies':'y') + '.';
+
+  // Colour scale: light blue -> deep blue by count.
+  function colorFor(v){
+    var t = maxC>1 ? (v-1)/(maxC-1) : 1;     // 0..1
+    // interpolate #d4e9f5 -> #1e8bc3 -> #0d4f7a
+    function lerp(a,b,t){ return Math.round(a+(b-a)*t); }
+    var stops = [[212,233,245],[30,139,195],[13,79,122]];
+    var seg = t<0.5 ? 0 : 1;
+    var lt = t<0.5 ? t/0.5 : (t-0.5)/0.5;
+    var c1=stops[seg], c2=stops[seg+1];
+    return 'rgb('+lerp(c1[0],c2[0],lt)+','+lerp(c1[1],c2[1],lt)+','+lerp(c1[2],c2[2],lt)+')';
+  }
+
+  // Try to load a world map GeoJSON for a real choropleth; fall back to a
+  // ranked bar list if the CDN is unreachable.
+  var geo = await fetchJSON('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json', 8000);
+  var drewMap = false;
+  if (geo && window.topojson === undefined){
+    // world-atlas is TopoJSON; we need the topojson client to convert. Load it.
+    await new Promise(function(res){
+      var s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js';
+      s.onload=res; s.onerror=res; document.head.appendChild(s);
+    });
+  }
+
+  if (geo && window.topojson && window.topojson.feature){
+    try {
+      var fc = window.topojson.feature(geo, geo.objects.countries);
+      drewMap = drawChoropleth(mapEl, fc, byCountry, colorFor);
+    } catch(e){ drewMap = false; }
+  }
+
+  if (!drewMap){
+    // Fallback: ranked horizontal bars (still informative, no map).
+    mapEl.innerHTML = '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Map tiles unavailable — showing ranked list.</div>';
+  }
+
+  // Legend / ranked list (always shown, complements the map).
+  var sorted = codes.slice().sort(function(a,b){ return byCountry[b]-byCountry[a]; });
+  legendEl.innerHTML = sorted.map(function(c){
+    return '<span class="subs-cl-item"><span class="subs-cl-swatch" style="background:'+colorFor(byCountry[c])+'"></span>'
+      + escH(countryName(c)) + ' <span class="subs-cl-count">'+byCountry[c]+'</span></span>';
+  }).join('');
+}
+
+/* ISO numeric (used by world-atlas) -> ISO alpha-2, for matching our codes. */
+var ISO_N3_TO_A2 = {
+  "004":"AF","008":"AL","012":"DZ","032":"AR","051":"AM","036":"AU","040":"AT","031":"AZ","048":"BH","050":"BD","112":"BY","056":"BE","068":"BO","070":"BA","076":"BR","100":"BG","116":"KH","120":"CM","124":"CA","152":"CL","156":"CN","170":"CO","188":"CR","191":"HR","192":"CU","196":"CY","203":"CZ","208":"DK","214":"DO","218":"EC","818":"EG","233":"EE","231":"ET","246":"FI","250":"FR","268":"GE","276":"DE","288":"GH","300":"GR","320":"GT","344":"HK","348":"HU","352":"IS","356":"IN","360":"ID","364":"IR","368":"IQ","372":"IE","376":"IL","380":"IT","388":"JM","392":"JP","400":"JO","398":"KZ","404":"KE","410":"KR","414":"KW","428":"LV","422":"LB","440":"LT","442":"LU","458":"MY","470":"MT","484":"MX","498":"MD","504":"MA","524":"NP","528":"NL","554":"NZ","566":"NG","807":"MK","578":"NO","512":"OM","586":"PK","275":"PS","591":"PA","604":"PE","608":"PH","616":"PL","620":"PT","634":"QA","642":"RO","643":"RU","682":"SA","688":"RS","702":"SG","703":"SK","705":"SI","710":"ZA","724":"ES","144":"LK","752":"SE","756":"CH","158":"TW","834":"TZ","764":"TH","788":"TN","792":"TR","800":"UG","804":"UA","784":"AE","826":"GB","840":"US","858":"UY","860":"UZ","862":"VE","704":"VN","894":"ZM","716":"ZW"
+};
+
+function drawChoropleth(container, featureCollection, byCountry, colorFor){
+  // Equirectangular projection into a 640x320 viewBox.
+  var W=640, H=320;
+  function project(lon, lat){
+    return [ (lon+180)/360*W, (90-lat)/180*H ];
+  }
+  function pathForGeometry(geom){
+    var d='';
+    function ring(coords){
+      return coords.map(function(pt,i){
+        var p=project(pt[0],pt[1]);
+        return (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1);
+      }).join('')+'Z';
+    }
+    if (geom.type==='Polygon'){ geom.coordinates.forEach(function(r){ d+=ring(r); }); }
+    else if (geom.type==='MultiPolygon'){ geom.coordinates.forEach(function(poly){ poly.forEach(function(r){ d+=ring(r); }); }); }
+    return d;
+  }
+
+  var paths = featureCollection.features.map(function(f){
+    var n3 = String(f.id).padStart(3,'0');
+    var a2 = ISO_N3_TO_A2[n3];
+    var v = a2 && byCountry[a2];
+    var fill = v ? colorFor(v) : 'var(--bg-chip)';
+    var cls = v ? 'subs-map-country has-data' : 'subs-map-country';
+    var title = v ? (countryName(a2)+': '+v+' author'+(v!==1?'s':'')) : '';
+    var d = pathForGeometry(f.geometry);
+    if (!d) return '';
+    return '<path class="'+cls+'" d="'+d+'" fill="'+fill+'"'+(title?' ><title>'+escH(title)+'</title></path>':' />');
+  }).join('');
+
+  container.innerHTML = '<svg class="subs-map-svg" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+paths+'</svg>'
+    + '<div class="subs-map-scale"><span>Fewer</span><span class="subs-map-scale-grad"></span><span>More authors</span></div>';
+  return true;
 }
 
 /* ============================================
