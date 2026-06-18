@@ -54,9 +54,7 @@ DECISION_LABELS = {
 DATE_START = "2025-10-01"
 DATE_END = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
 
-# One-time flags so we only dump the first object of each kind once (debug).
-_AUTHOR_DEBUG_DONE = False
-_RA_DEBUG_DONE = False
+# One-time flag so we only dump the first decision object once (debug).
 _DEC_DEBUG_DONE = False
 
 API_KEY = os.environ.get("OJS_API_KEY", "").strip()
@@ -319,10 +317,9 @@ def fetch_all_published_dois():
 
 
 def get_submission_detail(sub_id):
-    """Return a rich per-submission dict in a single API call:
-    title, doi, dateSubmitted, author countries, review counts,
-    latest editorial decision, and whether it's published. Best-effort;
-    missing fields come back empty/zero.
+    """Return a per-submission dict in one or two API calls:
+    title, doi, dateSubmitted, status (Published/Accepted/Declined/Under
+    review), latest decision, and a milestone timeline. Best-effort.
     """
     data = api_get("/submissions/%s" % sub_id)
     if not data:
@@ -333,7 +330,6 @@ def get_submission_detail(sub_id):
                pubs[0] if pubs else None)
 
     title, doi = "", ""
-    countries = []
     if pub:
         title = str(first_locale_value(pub.get("title") or "")).strip()
         doi_obj = pub.get("doiObject") or {}
@@ -346,84 +342,23 @@ def get_submission_detail(sub_id):
                 doi = m.group(0).rstrip(".,;)")
         doi = re.sub(r"^https?://doi\.org/", "", str(doi), flags=re.I).strip()
 
-        # Author countries. OJS may expose the ISO code under different keys
-        # depending on version: 'country' (alpha-2), sometimes nested, or via
-        # the author's affiliation. Try the common ones.
-        authors_list = pub.get("authors") or []
-        # One-time diagnostic: dump the keys + country of the first author we
-        # ever see, so it's clear what the API actually returns.
-        global _AUTHOR_DEBUG_DONE
-        if authors_list and not _AUTHOR_DEBUG_DONE:
-            _AUTHOR_DEBUG_DONE = True
-            a0 = authors_list[0]
-            print("  [debug] first author keys: %s" % sorted(a0.keys()),
-                  file=sys.stderr)
-            print("  [debug] first author 'country' value: %r"
-                  % a0.get("country"), file=sys.stderr)
-        for author in authors_list:
-            c = author.get("country")
-            if isinstance(c, dict):
-                c = first_locale_value(c)
-            c = (c or "").strip().upper()
-            if not c:
-                alt = author.get("countryLocalized") or ""
-                c = str(alt).strip().upper()[:2] if alt else ""
-            if c and len(c) == 2 and c.isalpha():
-                countries.append(c)
-
     date_submitted = (data.get("dateSubmitted") or "")[:10]
 
-    # ---- Published status -------------------------------------------------
+    # ---- Status ----------------------------------------------------------
     # OJS submission status: 1=queued, 3=published, 4=declined, 5=scheduled.
+    # We collapse everything to four labels: Published, Accepted, Declined,
+    # or "Under review" (the catch-all for anything still in the workflow).
     status_code = data.get("status")
-    status_label = {
-        1: "In progress",
-        3: "Published",
-        4: "Declined",
-        5: "Scheduled",
-    }.get(status_code, "Unknown")
     is_published = (status_code == 3) or bool(
         pub and pub.get("datePublished"))
-
-    # ---- Review assignments ----------------------------------------------
-    # reviewAssignments is returned to editors/managers. Each entry is one
-    # invited reviewer. We count invited, completed, and declined.
-    # Review-assignment status constants (pkp-lib ReviewAssignment):
-    #   0 = awaiting response, 1 = declined, 4 = accepted (response received),
-    #   5 = received (review submitted), 6 = complete (confirmed by editor),
-    #   7 = thanked, 8 = cancelled, 9 = request resent, 10/11 = overdue.
-    # A review counts as "completed" when dateCompleted is set OR the status
-    # is one of the submitted/complete/thanked states.
-    ras = data.get("reviewAssignments") or []
-    global _RA_DEBUG_DONE
-    if ras and not _RA_DEBUG_DONE:
-        _RA_DEBUG_DONE = True
-        r0 = ras[0]
-        print("  [debug] first reviewAssignment keys: %s" % sorted(r0.keys()),
-              file=sys.stderr)
-        print("  [debug] first reviewAssignment status=%r dateCompleted=%r "
-              "dateConfirmed=%r"
-              % (r0.get("status"), r0.get("dateCompleted"),
-                 r0.get("dateConfirmed")), file=sys.stderr)
-    COMPLETED_STATES = (5, 6, 7)
-    DECLINED_STATES = (1, 8)
-    invited = 0
-    completed = 0
-    declined = 0
-    for ra in ras:
-        invited += 1
-        st = ra.get("status")
-        is_done = bool(ra.get("dateCompleted")) or \
-            (isinstance(st, int) and st in COMPLETED_STATES)
-        is_declined = (isinstance(st, int) and st in DECLINED_STATES) or \
-            bool(ra.get("dateDeclined"))
-        if is_done:
-            completed += 1
-        elif is_declined:
-            declined += 1
-
-    # ---- Review rounds ----------------------------------------------------
-    review_rounds = len(data.get("reviewRounds") or [])
+    if is_published:
+        status_label = "Published"
+    elif status_code == 4:
+        status_label = "Declined"
+    elif status_code == 5:
+        status_label = "Accepted"   # scheduled for publication = accepted
+    else:
+        status_label = "Under review"
 
     # ---- Editorial decisions (full list) ---------------------------------
     # The embedded `decisions` array on the submission object is often sparse
@@ -451,66 +386,29 @@ def get_submission_detail(sub_id):
         decision_date = (last.get("dateDecided") or "")[:10]
         decision_label = DECISION_LABELS.get(last.get("decision"), "")
     if not decision_label and status_label in ("Published", "Declined",
-                                               "Scheduled"):
+                                               "Accepted"):
         decision_label = status_label
 
     # ---- Build the per-submission event timeline -------------------------
+    # Only four milestone kinds: Submitted, Accepted, Declined, Published.
     # Each event: {date, label, kind}. kind drives the dot colour in the UI.
     events = []
     if date_submitted:
         events.append({"date": date_submitted, "label": "Submitted",
                        "kind": "submitted"})
 
-    # Review-assignment milestones: earliest "sent to review" = earliest
-    # request date; "reviews received" = each completed review's date.
-    request_dates = []
-    for ra in ras:
-        rq = (ra.get("dateAssigned") or ra.get("dateRequested")
-              or ra.get("dateNotified") or "")[:10]
-        if rq:
-            request_dates.append(rq)
-        dc = (ra.get("dateCompleted") or ra.get("dateConfirmed") or "")[:10]
-        st = ra.get("status")
-        if dc or (isinstance(st, int) and st in COMPLETED_STATES):
-            if dc:
-                events.append({"date": dc, "label": "Review received",
-                               "kind": "review"})
-    # Fall back to the review round's start date if no assignment dates.
-    if not request_dates:
-        for rr in (data.get("reviewRounds") or []):
-            d = (rr.get("dateNotified") or rr.get("dateCreated") or "")[:10]
-            if d:
-                request_dates.append(d)
-    if request_dates:
-        events.append({"date": min(request_dates), "label": "Sent to review",
-                       "kind": "sent"})
-
-    # Decision milestones from the decisions array.
-    REVISION_CODES = {2, 9, 19}        # minor/major/recommend revisions
+    # Decision milestones -> collapse to Accepted / Declined only.
     ACCEPT_CODES = {1, 15, 17}         # accept / accept-skip / recommend accept
     DECLINE_CODES = {4, 16, 18}        # decline / initial decline / recommend decline
-    REVIEW_CODES = {7, 8, 21}          # send to (external) review
     for d in decisions:
         code = d.get("decision")
         dd = (d.get("dateDecided") or "")[:10]
         if not dd:
             continue
-        if code in REVISION_CODES:
-            lab = "Revisions requested"
-            kind = "revision"
-        elif code in ACCEPT_CODES:
-            lab = "Accepted"
-            kind = "accepted"
+        if code in ACCEPT_CODES:
+            events.append({"date": dd, "label": "Accepted", "kind": "accepted"})
         elif code in DECLINE_CODES:
-            lab = "Declined"
-            kind = "declined"
-        elif code in REVIEW_CODES:
-            lab = "Sent to review"
-            kind = "sent"
-        else:
-            lab = DECISION_LABELS.get(code, "Decision")
-            kind = "decision"
-        events.append({"date": dd, "label": lab, "kind": kind})
+            events.append({"date": dd, "label": "Declined", "kind": "declined"})
 
     # Publication.
     date_published = ""
@@ -520,16 +418,10 @@ def get_submission_detail(sub_id):
         events.append({"date": date_published, "label": "Published",
                        "kind": "published"})
 
-    # Sort chronologically; drop exact duplicate (date,label) pairs and
-    # collapse repeated "Sent to review" events to the earliest one.
+    # Sort chronologically; drop exact duplicate (date,label) pairs.
     seen = set()
-    sent_seen = False
     timeline = []
     for ev in sorted(events, key=lambda e: e["date"]):
-        if ev["label"] == "Sent to review":
-            if sent_seen:
-                continue
-            sent_seen = True
         key = (ev["date"], ev["label"])
         if key in seen:
             continue
@@ -541,13 +433,8 @@ def get_submission_detail(sub_id):
         "title": title,
         "doi": doi,
         "dateSubmitted": date_submitted,
-        "countries": countries,
         "status": status_label,
         "isPublished": is_published,
-        "reviewsInvited": invited,
-        "reviewsCompleted": completed,
-        "reviewsDeclined": declined,
-        "reviewRounds": review_rounds,
         "decision": decision_label,
         "decisionDate": decision_date,
         "timeline": timeline,
@@ -609,25 +496,29 @@ def write_submissions_json(details, path="submissions.json"):
     if dropped:
         print("  filtered out %d test/placeholder submission(s)." % dropped)
 
-    # Per-month submission counts (YYYY-MM -> n).
+    # Per-month submission counts, broken down by status (YYYY-MM ->
+    # {Published, Accepted, "Under review", Declined}).
+    STATUS_KEYS = ["Published", "Accepted", "Under review", "Declined"]
     by_month = {}
     for d in details:
         ds = d.get("dateSubmitted") or ""
-        if len(ds) >= 7:
-            ym = ds[:7]
-            by_month[ym] = by_month.get(ym, 0) + 1
+        if len(ds) < 7:
+            continue
+        ym = ds[:7]
+        st = d.get("status") or "Under review"
+        if st not in STATUS_KEYS:
+            st = "Under review"
+        if ym not in by_month:
+            by_month[ym] = {k: 0 for k in STATUS_KEYS}
+        by_month[ym][st] += 1
 
-    # Country totals across all authors of all submissions (ISO code -> n).
-    by_country = {}
-    for d in details:
-        for c in d.get("countries", []):
-            by_country[c] = by_country.get(c, 0) + 1
-
-    # Aggregate editorial totals for the sidebar.
+    # Aggregate totals for the sidebar.
     totals = {
-        "published": sum(1 for d in details if d.get("isPublished")),
-        "reviewsInvited": sum(d.get("reviewsInvited", 0) for d in details),
-        "reviewsCompleted": sum(d.get("reviewsCompleted", 0) for d in details),
+        "published": sum(1 for d in details if d.get("status") == "Published"),
+        "accepted": sum(1 for d in details if d.get("status") == "Accepted"),
+        "declined": sum(1 for d in details if d.get("status") == "Declined"),
+        "underReview": sum(1 for d in details
+                           if d.get("status") == "Under review"),
     }
 
     payload = {
@@ -637,18 +528,12 @@ def write_submissions_json(details, path="submissions.json"):
               "dateSubmitted": d["dateSubmitted"],
               "status": d.get("status", ""),
               "isPublished": d.get("isPublished", False),
-              "reviewsInvited": d.get("reviewsInvited", 0),
-              "reviewsCompleted": d.get("reviewsCompleted", 0),
-              "reviewsDeclined": d.get("reviewsDeclined", 0),
-              "reviewRounds": d.get("reviewRounds", 0),
               "decision": d.get("decision", ""),
               "decisionDate": d.get("decisionDate", ""),
-              "timeline": d.get("timeline", []),
-              "countries": d.get("countries", [])} for d in details],
+              "timeline": d.get("timeline", [])} for d in details],
             key=lambda x: x.get("dateSubmitted") or "",
         ),
         "byMonth": by_month,
-        "byCountry": by_country,
         "totals": totals,
     }
     new_content = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
@@ -662,8 +547,8 @@ def write_submissions_json(details, path="submissions.json"):
         return False
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(new_content)
-    print("Wrote submissions.json with %d submissions, %d months, "
-          "%d countries." % (len(details), len(by_month), len(by_country)))
+    print("Wrote submissions.json with %d submissions, %d months."
+          % (len(details), len(by_month)))
     return True
 
 
@@ -709,7 +594,7 @@ def main():
     today = datetime.date.today().strftime("%Y%m%d")
     out_path = os.path.join(OUT_DIR, "statistics-%s.csv" % today)
 
-    # ---- Submissions tab data: dates + author countries ----------------
+    # ---- Submissions tab data: dates, status, decisions, timeline -------
     # Discover the full set of submission IDs the manager account can see
     # (includes non-published if the list endpoint allows it). Fall back to
     # the published set so the tab always has data.
