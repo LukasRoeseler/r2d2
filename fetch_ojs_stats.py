@@ -211,7 +211,66 @@ def first_locale_value(d):
     return str(d)
 
 
-def get_submission_meta(sub_id):
+# Cache of userId -> country code (alpha-2), to avoid refetching the same
+# user across multiple submissions.
+_USER_COUNTRY_CACHE = {}
+_USER_DEBUG_DONE = False
+
+
+def get_user_country(user_id):
+    """Fetch a user's profile and return their country as an ISO alpha-2
+    code (e.g. 'DE'), or '' if unavailable. Results are cached.
+    """
+    if not user_id:
+        return ""
+    if user_id in _USER_COUNTRY_CACHE:
+        return _USER_COUNTRY_CACHE[user_id]
+    data = api_get("/users/%s" % user_id) or {}
+    global _USER_DEBUG_DONE
+    if data and not _USER_DEBUG_DONE:
+        _USER_DEBUG_DONE = True
+        print("  [debug] /users/%s keys: %s" % (user_id, sorted(data.keys())),
+              file=sys.stderr)
+        print("  [debug] user country=%r userName=%r"
+              % (data.get("country"), data.get("userName")), file=sys.stderr)
+    c = data.get("country")
+    if isinstance(c, dict):
+        c = first_locale_value(c)
+    c = (c or "").strip().upper()
+    if not (len(c) == 2 and c.isalpha()):
+        c = ""
+    _USER_COUNTRY_CACHE[user_id] = c
+    return c
+
+
+def get_submitter_user_id(submission):
+    """Find the submitting user's ID from a submission object. Tries the
+    explicit submitter field first, then the author-role stage assignment.
+    """
+    # Some OJS versions expose the submitter directly.
+    for key in ("submitterId", "userId", "submitter"):
+        v = submission.get(key)
+        if isinstance(v, int):
+            return v
+        if isinstance(v, dict) and isinstance(v.get("id"), int):
+            return v["id"]
+    # Otherwise, look at stageAssignments for the author (the submitter is
+    # assigned in the author role on the submission). userGroup role IDs:
+    # 65536 = author (ROLE_ID_AUTHOR).
+    assignments = submission.get("stageAssignments") or []
+    # Prefer an explicit author-role assignment.
+    for a in assignments:
+        ug = a.get("userGroup") or {}
+        role_id = ug.get("roleId") if isinstance(ug, dict) else None
+        uid = a.get("userId") or (a.get("user") or {}).get("id")
+        if role_id == 65536 and uid:
+            return uid
+    # Fall back to the first assignment with a user id.
+    for a in assignments:
+        uid = a.get("userId") or (a.get("user") or {}).get("id")
+        if uid:
+            return uid
+    return None
     """Return (title, doi) for a submission in a single API call."""
     data = api_get("/submissions/%s" % sub_id)
     if not data:
@@ -344,6 +403,23 @@ def get_submission_detail(sub_id):
 
     date_submitted = (data.get("dateSubmitted") or "")[:10]
 
+    # ---- Submitter country -----------------------------------------------
+    # The reliable country value lives on the submitting user's profile, not
+    # on the publication's author records. Find the submitter and look it up.
+    submitter_id = get_submitter_user_id(data)
+    country = get_user_country(submitter_id)
+    # Fallback: if the submitter profile had no usable country, try the
+    # first author's country field on the publication.
+    if not country and pub:
+        for author in (pub.get("authors") or []):
+            ac = author.get("country")
+            if isinstance(ac, dict):
+                ac = first_locale_value(ac)
+            ac = (ac or "").strip().upper()
+            if len(ac) == 2 and ac.isalpha():
+                country = ac
+                break
+
     # ---- Status ----------------------------------------------------------
     # OJS submission status: 1=queued, 3=published, 4=declined, 5=scheduled.
     # We collapse everything to four labels: Published, Accepted, Declined,
@@ -433,6 +509,7 @@ def get_submission_detail(sub_id):
         "title": title,
         "doi": doi,
         "dateSubmitted": date_submitted,
+        "country": country,
         "status": status_label,
         "isPublished": is_published,
         "decision": decision_label,
@@ -512,6 +589,13 @@ def write_submissions_json(details, path="submissions.json"):
             by_month[ym] = {k: 0 for k in STATUS_KEYS}
         by_month[ym][st] += 1
 
+    # Country totals across submissions (ISO alpha-2 code -> n).
+    by_country = {}
+    for d in details:
+        c = (d.get("country") or "").strip().upper()
+        if c:
+            by_country[c] = by_country.get(c, 0) + 1
+
     # Aggregate totals for the sidebar.
     totals = {
         "published": sum(1 for d in details if d.get("status") == "Published"),
@@ -519,6 +603,7 @@ def write_submissions_json(details, path="submissions.json"):
         "declined": sum(1 for d in details if d.get("status") == "Declined"),
         "underReview": sum(1 for d in details
                            if d.get("status") == "Under review"),
+        "countries": len(by_country),
     }
 
     payload = {
@@ -528,12 +613,14 @@ def write_submissions_json(details, path="submissions.json"):
               "dateSubmitted": d["dateSubmitted"],
               "status": d.get("status", ""),
               "isPublished": d.get("isPublished", False),
+              "country": d.get("country", ""),
               "decision": d.get("decision", ""),
               "decisionDate": d.get("decisionDate", ""),
               "timeline": d.get("timeline", [])} for d in details],
             key=lambda x: x.get("dateSubmitted") or "",
         ),
         "byMonth": by_month,
+        "byCountry": by_country,
         "totals": totals,
     }
     new_content = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
