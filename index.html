@@ -380,6 +380,21 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
 .subs-badge-status.is-scheduled { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
 .subs-badge-status.is-progress { background: var(--r2-blue-light); color: var(--r2-blue-deep); border: 1px solid var(--r2-blue-border); }
 
+/* per-submission event timeline */
+.subs-events { margin-top: 11px; padding-left: 6px; border-left: 2px solid var(--border); display: flex; flex-direction: column; gap: 0; }
+.subs-event { display: flex; align-items: baseline; gap: 9px; padding: 3px 0 7px 12px; position: relative; }
+.subs-event-dot { position: absolute; left: -7px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--border-mid); border: 2px solid var(--bg); flex-shrink: 0; }
+.subs-event-date { font-size: 10.5px; font-family: var(--font-mono); color: var(--text-muted); white-space: nowrap; min-width: 80px; }
+.subs-event-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+.subs-event-submitted .subs-event-dot { background: var(--r2-blue); }
+.subs-event-sent .subs-event-dot      { background: #8b5cf6; }
+.subs-event-review .subs-event-dot    { background: #0ea47a; }
+.subs-event-revision .subs-event-dot  { background: var(--amber); }
+.subs-event-accepted .subs-event-dot  { background: var(--green); }
+.subs-event-declined .subs-event-dot  { background: #dc2626; }
+.subs-event-published .subs-event-dot { background: var(--r2-blue-deep); width: 11px; height: 11px; left: -8px; }
+.subs-event-decision .subs-event-dot  { background: var(--text-muted); }
+
 /* world map */
 .subs-map-svg { width: 100%; max-width: 640px; height: auto; display: block; }
 .subs-map-country { fill: var(--bg-chip); stroke: #fff; stroke-width: 0.4; transition: fill 0.15s; }
@@ -617,6 +632,7 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
         <!-- Timeline list -->
         <div class="subs-block">
           <div class="subs-block-title">All submissions <span id="subs-count" class="subs-count"></span></div>
+          <div class="subs-map-note" style="margin-bottom:14px">Note: reviewer counts reflect review assignments recorded in OJS only. Some reviewers are contacted outside the system, so the true number of invited and completed reviews may be higher.</div>
           <div id="subs-timeline"></div>
         </div>
       </div>
@@ -1536,13 +1552,19 @@ async function loadSubmissions(){
   setLoaderStep('fetch','active','s');
   setLoaderProgress(15, 's-loader-progress-bar');
 
-  var data = await fetchJSON(SUBS_URL);
+  // Fetch with a cache-buster so a previously-cached 404 (from before the
+  // file existed) doesn't stick. Retry once after a short delay.
+  var data = await fetchJSON(SUBS_URL + '?t=' + Date.now());
+  if (!data || !data.submissions){
+    await new Promise(function(r){ setTimeout(r, 800); });
+    data = await fetchJSON(SUBS_URL + '?t=' + (Date.now()+1));
+  }
 
   if (!data || !data.submissions){
     showLoader(false, 's-loader-wrap');
     document.getElementById('s-status-dot').className = 'status-dot error';
     document.getElementById('s-status-text').textContent =
-      'Could not load submissions.json — run the GitHub Action to generate it.';
+      'Could not load submissions.json — check that it exists at the repo root and is valid JSON, then hard-refresh (Ctrl/Cmd+Shift+R).';
     btn.disabled = false; btn.textContent = '↺ Refresh';
     return;
   }
@@ -1660,8 +1682,9 @@ function renderSubsTimeline(){
     if (s.reviewRounds > 0)
       badges += '<span class="subs-badge" title="Review rounds">🔄 '+s.reviewRounds+' round'+(s.reviewRounds!==1?'s':'')+'</span>';
 
-    // Latest decision.
-    if (s.decision)
+    // Latest decision — but skip it when it just repeats the status badge
+    // (e.g. status "Declined" + decision "Declined", or Published/Published).
+    if (s.decision && s.decision !== st)
       badges += '<span class="subs-badge subs-badge-decision" title="'+(s.decisionDate?('Decided '+escH(s.decisionDate)):'')+'">⚖ '+escH(s.decision)+'</span>';
 
     // Author countries.
@@ -1672,10 +1695,23 @@ function renderSubsTimeline(){
       }).join('');
     }
 
+    // Per-submission event timeline (Submitted → … → Published).
+    var tl = '';
+    if (s.timeline && s.timeline.length){
+      tl = '<div class="subs-events">' + s.timeline.map(function(ev){
+        return '<div class="subs-event subs-event-'+escH(ev.kind||'decision')+'">'
+          + '<span class="subs-event-dot"></span>'
+          + '<span class="subs-event-date">'+escH(fmtDate(ev.date))+'</span>'
+          + '<span class="subs-event-label">'+escH(ev.label)+'</span>'
+          + '</div>';
+      }).join('') + '</div>';
+    }
+
     return '<div class="subs-tl-item" style="animation-delay:'+(Math.min(i,30)*0.02)+'s">'
       + '<div class="subs-tl-date">'+dateTxt+'</div>'
       + '<div><div>'+titleHtml+'</div>'
       + (badges ? '<div class="subs-tl-badges">'+badges+'</div>' : '')
+      + tl
       + '</div>'
       + '</div>';
   }).join('');
