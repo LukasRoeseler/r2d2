@@ -426,7 +426,14 @@ def get_submission_detail(sub_id):
     review_rounds = len(data.get("reviewRounds") or [])
 
     # ---- Editorial decisions (full list) ---------------------------------
-    decisions = data.get("decisions") or []
+    # The embedded `decisions` array on the submission object is often sparse
+    # (known OJS quirk). The dedicated /submissions/{id}/decisions endpoint is
+    # the reliable source. Fall back to the embedded array if it's empty.
+    decisions = api_get("/submissions/%s/decisions" % sub_id)
+    if isinstance(decisions, dict):
+        decisions = decisions.get("items") or []
+    if not decisions:
+        decisions = data.get("decisions") or []
     # Debug dump of the first decision object so we can verify codes/dates.
     global _DEC_DEBUG_DONE
     if decisions and not _DEC_DEBUG_DONE:
@@ -458,15 +465,22 @@ def get_submission_detail(sub_id):
     # request date; "reviews received" = each completed review's date.
     request_dates = []
     for ra in ras:
-        rq = (ra.get("dateAssigned") or ra.get("dateRequested") or "")[:10]
+        rq = (ra.get("dateAssigned") or ra.get("dateRequested")
+              or ra.get("dateNotified") or "")[:10]
         if rq:
             request_dates.append(rq)
-        dc = (ra.get("dateCompleted") or "")[:10]
+        dc = (ra.get("dateCompleted") or ra.get("dateConfirmed") or "")[:10]
         st = ra.get("status")
         if dc or (isinstance(st, int) and st in COMPLETED_STATES):
             if dc:
                 events.append({"date": dc, "label": "Review received",
                                "kind": "review"})
+    # Fall back to the review round's start date if no assignment dates.
+    if not request_dates:
+        for rr in (data.get("reviewRounds") or []):
+            d = (rr.get("dateNotified") or rr.get("dateCreated") or "")[:10]
+            if d:
+                request_dates.append(d)
     if request_dates:
         events.append({"date": min(request_dates), "label": "Sent to review",
                        "kind": "sent"})
