@@ -27,6 +27,28 @@ import urllib.error
 OJS_BASE = "https://ejournals.uni-muenster.de/index.php/replicationresearch/api/v1"
 OUT_DIR = "statistics"
 
+# OJS editorial decision codes (pkp-lib SUBMISSION_EDITOR_DECISION_*).
+# Maps the common numeric codes to human-readable labels. Unknown codes
+# fall through to an empty label.
+DECISION_LABELS = {
+    1: "Accept",
+    2: "Request revisions (minor)",
+    3: "Resubmit for review",
+    4: "Decline",
+    5: "Send to production",
+    7: "Send to external review",
+    8: "Send to review (new round)",
+    9: "Request revisions (major)",
+    14: "Revert decline",
+    15: "Accept (skip review)",
+    16: "Initial decline",
+    17: "Recommend accept",
+    18: "Recommend decline",
+    19: "Recommend revisions",
+    20: "Recommend resubmit",
+    21: "Recommend external review",
+}
+
 # Date window: from the journal's launch (Oct 2025) through today. The journal
 # did not exist before October 2025, so there is nothing to query earlier.
 DATE_START = "2025-10-01"
@@ -279,9 +301,10 @@ def fetch_all_published_dois():
 
 
 def get_submission_detail(sub_id):
-    """Return a dict with title, doi, date_submitted, and author countries
-    for one submission, in a single API call. Best-effort; missing fields
-    come back empty.
+    """Return a rich per-submission dict in a single API call:
+    title, doi, dateSubmitted, author countries, review counts,
+    latest editorial decision, and whether it's published. Best-effort;
+    missing fields come back empty/zero.
     """
     data = api_get("/submissions/%s" % sub_id)
     if not data:
@@ -311,8 +334,53 @@ def get_submission_detail(sub_id):
             if c:
                 countries.append(c)
 
-    # Submission date: OJS exposes dateSubmitted on the submission object.
     date_submitted = (data.get("dateSubmitted") or "")[:10]
+
+    # ---- Published status -------------------------------------------------
+    # OJS submission status: 1=queued, 3=published, 4=declined, 5=scheduled.
+    status_code = data.get("status")
+    status_label = {
+        1: "In progress",
+        3: "Published",
+        4: "Declined",
+        5: "Scheduled",
+    }.get(status_code, "Unknown")
+    is_published = (status_code == 3) or bool(
+        pub and pub.get("datePublished"))
+
+    # ---- Review assignments ----------------------------------------------
+    # reviewAssignments is returned to editors/managers. Each entry is one
+    # invited reviewer. We count invited, completed, and declined.
+    # Review-assignment status constants (pkp-lib):
+    #   1 awaiting response, 4 declined, 5 received/complete, 6 complete,
+    #   7 thanked, 8 cancelled, 9 request resent. Completed >= 5 (except 8).
+    invited = 0
+    completed = 0
+    declined = 0
+    for ra in (data.get("reviewAssignments") or []):
+        invited += 1
+        st = ra.get("status")
+        if ra.get("dateCompleted") or (isinstance(st, int) and st in (5, 6, 7)):
+            completed += 1
+        elif isinstance(st, int) and st in (4, 8):
+            declined += 1
+
+    # ---- Review rounds ----------------------------------------------------
+    review_rounds = len(data.get("reviewRounds") or [])
+
+    # ---- Latest editorial decision ---------------------------------------
+    # The submission object exposes a `decisions` array (newest may be last).
+    # Each decision has a numeric `decision` code; we map the common ones.
+    decision_label = ""
+    decision_date = ""
+    decisions = data.get("decisions") or []
+    if decisions:
+        last = decisions[-1]
+        decision_date = (last.get("dateDecided") or "")[:10]
+        decision_label = DECISION_LABELS.get(last.get("decision"), "")
+    if not decision_label and status_label in ("Published", "Declined",
+                                               "Scheduled"):
+        decision_label = status_label
 
     return {
         "id": int(sub_id) if str(sub_id).isdigit() else sub_id,
@@ -320,6 +388,14 @@ def get_submission_detail(sub_id):
         "doi": doi,
         "dateSubmitted": date_submitted,
         "countries": countries,
+        "status": status_label,
+        "isPublished": is_published,
+        "reviewsInvited": invited,
+        "reviewsCompleted": completed,
+        "reviewsDeclined": declined,
+        "reviewRounds": review_rounds,
+        "decision": decision_label,
+        "decisionDate": decision_date,
     }
 
 
@@ -374,15 +450,32 @@ def write_submissions_json(details, path="submissions.json"):
         for c in d.get("countries", []):
             by_country[c] = by_country.get(c, 0) + 1
 
+    # Aggregate editorial totals for the sidebar.
+    totals = {
+        "published": sum(1 for d in details if d.get("isPublished")),
+        "reviewsInvited": sum(d.get("reviewsInvited", 0) for d in details),
+        "reviewsCompleted": sum(d.get("reviewsCompleted", 0) for d in details),
+    }
+
     payload = {
         "generated": datetime.date.today().isoformat(),
         "submissions": sorted(
             [{"id": d["id"], "title": d["title"], "doi": d["doi"],
-              "dateSubmitted": d["dateSubmitted"]} for d in details],
+              "dateSubmitted": d["dateSubmitted"],
+              "status": d.get("status", ""),
+              "isPublished": d.get("isPublished", False),
+              "reviewsInvited": d.get("reviewsInvited", 0),
+              "reviewsCompleted": d.get("reviewsCompleted", 0),
+              "reviewsDeclined": d.get("reviewsDeclined", 0),
+              "reviewRounds": d.get("reviewRounds", 0),
+              "decision": d.get("decision", ""),
+              "decisionDate": d.get("decisionDate", ""),
+              "countries": d.get("countries", [])} for d in details],
             key=lambda x: x.get("dateSubmitted") or "",
         ),
         "byMonth": by_month,
         "byCountry": by_country,
+        "totals": totals,
     }
     new_content = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
     existing = ""
