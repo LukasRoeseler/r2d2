@@ -278,6 +278,128 @@ def fetch_all_published_dois():
 
 
 
+def get_submission_detail(sub_id):
+    """Return a dict with title, doi, date_submitted, and author countries
+    for one submission, in a single API call. Best-effort; missing fields
+    come back empty.
+    """
+    data = api_get("/submissions/%s" % sub_id)
+    if not data:
+        return None
+    pubs = data.get("publications") or []
+    cur_id = data.get("currentPublicationId")
+    pub = next((p for p in pubs if p.get("id") == cur_id),
+               pubs[0] if pubs else None)
+
+    title, doi = "", ""
+    countries = []
+    if pub:
+        title = str(first_locale_value(pub.get("title") or "")).strip()
+        doi_obj = pub.get("doiObject") or {}
+        doi = (doi_obj.get("doi") if isinstance(doi_obj, dict) else None) \
+            or pub.get("pub-id::doi") or pub.get("doi") or ""
+        if not doi:
+            url = pub.get("urlPublished") or data.get("_href") or ""
+            m = re.search(r"10\.\d{4,}/\S+", url)
+            if m:
+                doi = m.group(0).rstrip(".,;)")
+        doi = re.sub(r"^https?://doi\.org/", "", str(doi), flags=re.I).strip()
+
+        # Author countries: each author object carries an ISO country code.
+        for author in (pub.get("authors") or []):
+            c = (author.get("country") or "").strip().upper()
+            if c:
+                countries.append(c)
+
+    # Submission date: OJS exposes dateSubmitted on the submission object.
+    date_submitted = (data.get("dateSubmitted") or "")[:10]
+
+    return {
+        "id": int(sub_id) if str(sub_id).isdigit() else sub_id,
+        "title": title,
+        "doi": doi,
+        "dateSubmitted": date_submitted,
+        "countries": countries,
+    }
+
+
+def fetch_all_submission_ids():
+    """Return all submission IDs the manager account can see.
+
+    Tries the /submissions list endpoint with the integer published-status
+    filter; if that yields nothing, falls back to the IDs already gathered
+    from /stats/publications (published items only).
+    """
+    ids = []
+    offset = 0
+    page_size = 100
+    # OJS status constants: 1=queued, 3=published, 4=declined, 5=scheduled.
+    while True:
+        data = api_get("/submissions", {
+            "count": page_size,
+            "offset": offset,
+        })
+        if not data:
+            break
+        items = data.get("items") or []
+        for sub in items:
+            sid = str(sub.get("id") or "")
+            if sid and sid not in ids:
+                ids.append(sid)
+        total = data.get("itemsMax", 0)
+        offset += len(items)
+        if not items or offset >= total:
+            break
+        time.sleep(0.2)
+    return ids
+
+
+def write_submissions_json(details, path="submissions.json"):
+    """Write submissions.json: list of submissions + monthly counts +
+    country totals. Only overwrites when changed.
+    """
+    import json
+
+    # Per-month submission counts (YYYY-MM -> n).
+    by_month = {}
+    for d in details:
+        ds = d.get("dateSubmitted") or ""
+        if len(ds) >= 7:
+            ym = ds[:7]
+            by_month[ym] = by_month.get(ym, 0) + 1
+
+    # Country totals across all authors of all submissions (ISO code -> n).
+    by_country = {}
+    for d in details:
+        for c in d.get("countries", []):
+            by_country[c] = by_country.get(c, 0) + 1
+
+    payload = {
+        "generated": datetime.date.today().isoformat(),
+        "submissions": sorted(
+            [{"id": d["id"], "title": d["title"], "doi": d["doi"],
+              "dateSubmitted": d["dateSubmitted"]} for d in details],
+            key=lambda x: x.get("dateSubmitted") or "",
+        ),
+        "byMonth": by_month,
+        "byCountry": by_country,
+    }
+    new_content = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    existing = ""
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            existing = fh.read()
+    if new_content == existing:
+        print("submissions.json is already up to date "
+              "(%d submissions)." % len(details))
+        return False
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(new_content)
+    print("Wrote submissions.json with %d submissions, %d months, "
+          "%d countries." % (len(details), len(by_month), len(by_country)))
+    return True
+
+
 def write_publications_json(ids, path="publications.json"):
     """Write publications.json as [{id, doi}, …] sorted by id.
 
@@ -304,7 +426,7 @@ def write_publications_json(ids, path="publications.json"):
 def main():
     preflight_check()
 
-    # Fetch the live list of published submissions from OJS.
+    # Fetch the live list of published submissions (ID + DOI) from OJS.
     print("Fetching published submissions from OJS API...")
     live_ids = fetch_all_published_dois()
     if not live_ids:
@@ -320,10 +442,37 @@ def main():
     today = datetime.date.today().strftime("%Y%m%d")
     out_path = os.path.join(OUT_DIR, "statistics-%s.csv" % today)
 
+    # ---- Submissions tab data: dates + author countries ----------------
+    # Discover the full set of submission IDs the manager account can see
+    # (includes non-published if the list endpoint allows it). Fall back to
+    # the published set so the tab always has data.
+    print("Discovering all submission IDs for the submissions tab...")
+    all_ids = fetch_all_submission_ids()
+    if not all_ids:
+        all_ids = [sid for sid, _ in ids]
+        print("  list endpoint returned nothing; using %d published IDs."
+              % len(all_ids))
+    else:
+        print("  found %d submissions via the list endpoint." % len(all_ids))
+
+    submission_details = []
+    detail_by_id = {}
+    for sid in all_ids:
+        det = get_submission_detail(sid)
+        if det:
+            submission_details.append(det)
+            detail_by_id[str(det["id"])] = det
+        time.sleep(0.2)
+    if submission_details:
+        write_submissions_json(submission_details)
+
+    # ---- Per-article monthly usage CSV ---------------------------------
     rows = []
     row_id = 0
     for sub_id, doi in ids:
-        title, _ = get_submission_meta(sub_id)
+        # Reuse the title from the detail pass if we already have it.
+        det = detail_by_id.get(str(sub_id))
+        title = det["title"] if det else get_submission_meta(sub_id)[0]
         abstract = monthly_timeline(sub_id, "abstract")
         galley = monthly_timeline(sub_id, "galley")
 
