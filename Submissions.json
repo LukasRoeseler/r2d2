@@ -1,0 +1,27 @@
+{
+  "generated": "2026-06-18",
+  "submissions": [
+    {
+      "id": 9022,
+      "title": "A Community Model for Rigorous and Inclusive Scholarship",
+      "doi": "",
+      "dateSubmitted": "2025-10-14"
+    },
+    {
+      "id": 9577,
+      "title": "From Replication Rates to Replication Evidence",
+      "doi": "",
+      "dateSubmitted": "2025-11-28"
+    }
+  ],
+  "byMonth": {
+    "2025-10": 1,
+    "2025-11": 1
+  },
+  "byCountry": {
+    "DE": 4,
+    "US": 2,
+    "GB": 1,
+    "NL": 1
+  }
+}
