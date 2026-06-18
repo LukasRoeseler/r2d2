@@ -361,11 +361,10 @@ def fetch_all_published_dois():
         return []
 
     # Step 2: for each submission ID fetch DOI from /submissions/{id}.
-    # (Title is fetched in the same call inside the main loop via
-    # get_submission_meta, so we just collect DOIs here.)
     ids = []
     for sid in sub_ids:
-        _, doi = get_submission_meta(sid)
+        det = get_submission_detail(sid)
+        doi = det["doi"] if det else ""
         if doi:
             ids.append((sid, doi))
         time.sleep(0.15)
@@ -711,7 +710,9 @@ def main():
     for sub_id, doi in ids:
         # Reuse the title from the detail pass if we already have it.
         det = detail_by_id.get(str(sub_id))
-        title = det["title"] if det else get_submission_meta(sub_id)[0]
+        if not det:
+            det = get_submission_detail(sub_id)
+        title = det["title"] if det else ""
         abstract = monthly_timeline(sub_id, "abstract")
         galley = monthly_timeline(sub_id, "galley")
 
