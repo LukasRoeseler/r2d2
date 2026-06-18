@@ -13,6 +13,7 @@ r2d2/
 ├── index.html               # The dashboard — one self-contained HTML file
 ├── fetch_ojs_stats.py       # Script run by the GitHub Action each week
 ├── publications.json        # Auto-generated: [{id, doi}, …] for every published article
+├── submissions.json         # Auto-generated: submission dates + author countries (Submissions tab)
 ├── statistics/
 │   └── statistics-YYYYMMDD.csv   # Auto-generated: per-article monthly stats
 └── .github/
@@ -38,7 +39,9 @@ On every page load the dashboard:
    - **DataCite** — citation count
    - **Bluesky** — post count mentioning the DOI
    - **Altmetric** — donut badge (via their embed script)
-5. Renders two tabs: **Published Articles** and **R2 Zenodo Community**.
+5. Renders three tabs: **Published Articles**, **Submissions**, and **R2 Zenodo Community**.
+
+The **Submissions** tab reads `submissions.json` and shows: a per-month submission bar chart, a world choropleth map of author countries (with a ranked country list), and a full submission timeline sorted by submission date. The map uses [world-atlas](https://github.com/topojson/world-atlas) TopoJSON loaded from a CDN at runtime; if the CDN is unreachable it falls back to the ranked list.
 
 The Zenodo tab uses a hardcoded snapshot (Zenodo returns 403 to browser User-Agents) and enriches it live with OpenAlex, DataCite, and Bluesky.
 
@@ -50,9 +53,10 @@ What it does:
 
 1. Calls `fetch_ojs_stats.py` with the `OJS_API_KEY` secret.
 2. The script fetches all published submissions from the OJS API and writes `publications.json`.
-3. For each submission it fetches monthly abstract views and monthly galley (PDF) downloads from the OJS stats API.
-4. Writes `statistics/statistics-YYYYMMDD.csv` with one row per (submission, metric, month).
-5. Commits any changed files and pushes.
+3. It also fetches every submission's date and author countries and writes `submissions.json` (powers the Submissions tab).
+4. For each submission it fetches monthly abstract views and monthly galley (PDF) downloads from the OJS stats API.
+5. Writes `statistics/statistics-YYYYMMDD.csv` with one row per (submission, metric, month).
+6. Commits any changed files and pushes.
 
 ---
 
