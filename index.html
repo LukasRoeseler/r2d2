@@ -351,6 +351,11 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 
 /* ── SUBMISSIONS TAB ── */
 .subs-block { margin-bottom: 34px; }
+.subs-country-row { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
+.subs-country-name { flex: 0 0 180px; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.subs-country-track { flex: 1; height: 16px; background: var(--bg-chip); border-radius: 4px; overflow: hidden; }
+.subs-country-fill { height: 100%; background: linear-gradient(90deg, var(--r2-blue), var(--r2-blue-dark)); border-radius: 4px; min-width: 2px; }
+.subs-country-count { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--text-secondary); font-variant-numeric: tabular-nums; min-width: 20px; text-align: right; }
 .subs-block-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; letter-spacing: -0.01em; }
 .subs-count { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: 4px; }
 .subs-map-note { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
@@ -521,6 +526,7 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
       <div class="stat-row"><span class="stat-label">Accepted</span><span class="stat-value" id="s-sum-accepted">—</span></div>
       <div class="stat-row"><span class="stat-label">Declined</span><span class="stat-value" id="s-sum-declined">—</span></div>
       <div class="stat-row"><span class="stat-label">Under review</span><span class="stat-value" id="s-sum-review">—</span></div>
+      <div class="stat-row"><span class="stat-label">Countries</span><span class="stat-value" id="s-sum-countries">—</span></div>
       <div class="stat-row"><span class="stat-label">First submission</span><span class="stat-value" id="s-sum-first" style="font-size:13px">—</span></div>
       <div class="stat-row"><span class="stat-label">Latest submission</span><span class="stat-value" id="s-sum-latest" style="font-size:13px">—</span></div>
     </div>
@@ -631,6 +637,12 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
         <div class="subs-block">
           <div class="subs-block-title">Submissions per month</div>
           <div id="subs-month-chart"></div>
+        </div>
+
+        <!-- Submitting authors by country -->
+        <div class="subs-block" id="subs-country-block" style="display:none">
+          <div class="subs-block-title">Submitting authors by country</div>
+          <div id="subs-country-list"></div>
         </div>
 
         <!-- Timeline list -->
@@ -1569,12 +1581,14 @@ async function loadSubmissions(){
   document.getElementById('s-sum-accepted').textContent = fmtNum(totals.accepted || 0);
   document.getElementById('s-sum-declined').textContent = fmtNum(totals.declined || 0);
   document.getElementById('s-sum-review').textContent = fmtNum(totals.underReview || 0);
+  document.getElementById('s-sum-countries').textContent = fmtNum(totals.countries || Object.keys(data.byCountry||{}).length);
   if (dated.length){
     document.getElementById('s-sum-first').textContent  = fmtDate(dated[0].dateSubmitted);
     document.getElementById('s-sum-latest').textContent = fmtDate(dated[dated.length-1].dateSubmitted);
   }
 
   renderSubsMonthChart();
+  renderSubsCountries();
   renderSubsTimeline();
 
   setLoaderStep('render','done','s');
@@ -1588,6 +1602,44 @@ async function loadSubmissions(){
     subs.length + ' submissions · data generated ' + (data.generated || '—');
 
   btn.disabled = false; btn.textContent = '↺ Refresh';
+}
+
+// Minimal ISO alpha-2 -> country name map for display.
+var COUNTRY_NAMES = {
+  AR:'Argentina',AT:'Austria',AU:'Australia',BE:'Belgium',BR:'Brazil',CA:'Canada',CH:'Switzerland',CL:'Chile',
+  CN:'China',CO:'Colombia',CZ:'Czechia',DE:'Germany',DK:'Denmark',EE:'Estonia',EG:'Egypt',ES:'Spain',
+  FI:'Finland',FR:'France',GB:'United Kingdom',GR:'Greece',HK:'Hong Kong',HR:'Croatia',HU:'Hungary',ID:'Indonesia',
+  IE:'Ireland',IL:'Israel',IN:'India',IR:'Iran',IT:'Italy',JP:'Japan',KE:'Kenya',KR:'South Korea',
+  LT:'Lithuania',LU:'Luxembourg',LV:'Latvia',MX:'Mexico',MY:'Malaysia',NG:'Nigeria',NL:'Netherlands',NO:'Norway',
+  NZ:'New Zealand',PE:'Peru',PH:'Philippines',PK:'Pakistan',PL:'Poland',PT:'Portugal',RO:'Romania',RS:'Serbia',
+  RU:'Russia',SE:'Sweden',SG:'Singapore',SI:'Slovenia',SK:'Slovakia',TH:'Thailand',TR:'Türkiye',TW:'Taiwan',
+  UA:'Ukraine',US:'United States',UY:'Uruguay',VN:'Vietnam',ZA:'South Africa'
+};
+function countryName(code){ return COUNTRY_NAMES[code] || code; }
+function flagEmoji(code){
+  if (!/^[A-Za-z]{2}$/.test(code)) return '';
+  return code.toUpperCase().replace(/./g, function(c){
+    return String.fromCodePoint(127397 + c.charCodeAt(0));
+  });
+}
+
+function renderSubsCountries(){
+  var byCountry = (SUBS_DATA && SUBS_DATA.byCountry) || {};
+  var block = document.getElementById('subs-country-block');
+  var el = document.getElementById('subs-country-list');
+  var entries = Object.keys(byCountry).map(function(c){ return [c, byCountry[c]]; })
+    .sort(function(a,b){ return b[1]-a[1] || a[0].localeCompare(b[0]); });
+  if (!entries.length){ block.style.display = 'none'; return; }
+  block.style.display = '';
+  var max = entries[0][1] || 1;
+  el.innerHTML = entries.map(function(e){
+    var pct = (e[1]/max)*100;
+    return '<div class="subs-country-row">'
+      + '<div class="subs-country-name">'+escH(flagEmoji(e[0]))+' '+escH(countryName(e[0]))+'</div>'
+      + '<div class="subs-country-track"><div class="subs-country-fill" style="width:'+pct.toFixed(1)+'%"></div></div>'
+      + '<div class="subs-country-count">'+e[1]+'</div>'
+      + '</div>';
+  }).join('');
 }
 
 function renderSubsMonthChart(){
@@ -1639,14 +1691,8 @@ function renderSubsMonthChart(){
   var names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function lbl(m){ return names[parseInt(m.slice(5,7),10)-1] + " '" + m.slice(2,4); }
 
-  var ticks = [0, Math.round(axisMax/2), axisMax].filter(function(t,i,a){ return a.indexOf(t)===i; });
-  var yAxis = '<div class="subs-yaxis">' + ticks.slice().reverse().map(function(t){
-    return '<div class="subs-ytick"><span class="subs-ytick-label">'+t+'</span></div>';
-  }).join('') + '</div>';
-  var gridlines = ticks.map(function(t){
-    var bottom = (t/axisMax)*CHART_H;
-    return '<div class="subs-gridline" style="bottom:'+bottom.toFixed(1)+'px"></div>';
-  }).join('');
+  var yAxis = '';
+  var gridlines = '';
 
   var bars = full.map(function(m){
     var c = counts(m);
@@ -1684,7 +1730,6 @@ function renderSubsMonthChart(){
   el.innerHTML =
     '<div class="subs-chart">'
     +   '<div class="subs-plot">'
-    +     '<div class="subs-grid" style="height:'+CHART_H+'px">'+gridlines+'</div>'
     +     '<div class="subs-bars" style="height:'+CHART_H+'px">'+bars+'</div>'
     +     '<div class="subs-bar-labels">'+labels+'</div>'
     +   '</div>'
