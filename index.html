@@ -355,14 +355,27 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 .subs-count { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: 4px; }
 .subs-map-note { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
 
-/* monthly bar chart */
-.subs-bars { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: 0 2px; border-bottom: 1px solid var(--border-mid); position: relative; }
+/* monthly bar chart with y-axis */
+.subs-chart { display: flex; align-items: stretch; gap: 8px; max-width: 620px; }
+.subs-yaxis { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; height: 140px; padding-bottom: 0; flex-shrink: 0; min-width: 22px; }
+.subs-ytick { display: flex; align-items: center; height: 0; }
+.subs-ytick-label { font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums; line-height: 1; transform: translateY(-50%); }
+.subs-plot { flex: 1; position: relative; min-width: 0; }
+.subs-grid { position: absolute; top: 0; left: 0; right: 0; pointer-events: none; }
+.subs-gridline { position: absolute; left: 0; right: 0; height: 1px; background: var(--border); }
+.subs-gridline:first-child { background: var(--border-mid); }
+.subs-bars { display: flex; align-items: flex-end; gap: 4px; padding: 0 2px; position: relative; z-index: 1; }
 .subs-bar-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; position: relative; min-width: 0; }
 .subs-bar { width: 100%; max-width: 38px; background: linear-gradient(180deg, var(--r2-blue), var(--r2-blue-dark)); border-radius: 3px 3px 0 0; transition: opacity 0.15s; cursor: default; min-height: 2px; position: relative; }
+.subs-bar-stack { width: 100%; max-width: 38px; display: flex; flex-direction: column-reverse; border-radius: 3px 3px 0 0; overflow: hidden; transition: opacity 0.15s; }
+.subs-bar-col:hover .subs-bar-stack { opacity: 0.8; }
+.subs-seg { width: 100%; }
 .subs-bar-col:hover .subs-bar { opacity: 0.78; }
 .subs-bar-val { font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
-.subs-bar-labels { display: flex; gap: 4px; padding: 6px 2px 0; }
+.subs-bar-labels { display: flex; gap: 4px; padding: 6px 2px 0; border-top: 1px solid var(--border-mid); }
 .subs-bar-label { flex: 1; text-align: center; font-size: 9px; color: var(--text-muted); font-variant-numeric: tabular-nums; min-width: 0; overflow: hidden; }
+.subs-yaxis-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-top: 6px; }
+.subs-chart-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; padding-left: 30px; }
 
 /* timeline list */
 .subs-tl-item { display: grid; grid-template-columns: 92px 1fr; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border); align-items: baseline; opacity: 0; transform: translateY(6px); animation: fadeUp 0.3s forwards; }
@@ -505,11 +518,11 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
     <div id="sidebar-subs-stats" style="display:none">
       <div class="stat-row"><span class="stat-label">Total submissions</span><span class="stat-value" id="s-sum-total">—</span></div>
       <div class="stat-row"><span class="stat-label">Published</span><span class="stat-value" id="s-sum-published">—</span></div>
-      <div class="stat-row"><span class="stat-label">Reviews (done/invited)</span><span class="stat-value" id="s-sum-reviews" style="font-size:15px">—</span></div>
-      <div class="stat-row"><span class="stat-label">Countries</span><span class="stat-value" id="s-sum-countries">—</span></div>
+      <div class="stat-row"><span class="stat-label">Accepted</span><span class="stat-value" id="s-sum-accepted">—</span></div>
+      <div class="stat-row"><span class="stat-label">Declined</span><span class="stat-value" id="s-sum-declined">—</span></div>
+      <div class="stat-row"><span class="stat-label">Under review</span><span class="stat-value" id="s-sum-review">—</span></div>
       <div class="stat-row"><span class="stat-label">First submission</span><span class="stat-value" id="s-sum-first" style="font-size:13px">—</span></div>
       <div class="stat-row"><span class="stat-label">Latest submission</span><span class="stat-value" id="s-sum-latest" style="font-size:13px">—</span></div>
-      <div class="stat-row"><span class="stat-label">Top country</span><span class="stat-value" id="s-sum-topcountry" style="font-size:13px">—</span></div>
     </div>
 
     <div class="ojs-note" id="ojs-note">OJS stats: loading…</div>
@@ -536,8 +549,7 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
     <div class="source-legend" id="legend-subs" style="display:none">
       <div class="legend-title">Data sources</div>
       <div class="legend-item"><span class="legend-dot" style="background:#1e8bc3"></span>OJS REST API (submissions, dates)</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#0ea47a"></span>OJS author records (countries)</div>
-      <div class="legend-item" style="margin-top:8px;font-size:10px;color:var(--text-muted)">Country data reflects what authors entered at registration; some may be missing.</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>OJS editorial decisions (status, timeline)</div>
     </div>
   </aside>
 
@@ -609,7 +621,7 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
         </div>
         <div class="loader-steps">
           <div class="loader-step" data-sstep="fetch"><span class="step-dot"></span>Loading submission list from GitHub</div>
-          <div class="loader-step" data-sstep="render"><span class="step-dot"></span>Building charts &amp; map</div>
+          <div class="loader-step" data-sstep="render"><span class="step-dot"></span>Building chart &amp; timeline</div>
         </div>
         <div class="loader-progress"><div class="loader-progress-bar" id="s-loader-progress-bar"></div></div>
       </div>
@@ -621,18 +633,9 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
           <div id="subs-month-chart"></div>
         </div>
 
-        <!-- Country map -->
-        <div class="subs-block">
-          <div class="subs-block-title">Authors by country</div>
-          <div class="subs-map-note" id="subs-map-note"></div>
-          <div id="subs-map"></div>
-          <div id="subs-country-legend" class="subs-country-legend"></div>
-        </div>
-
         <!-- Timeline list -->
         <div class="subs-block">
           <div class="subs-block-title">All submissions <span id="subs-count" class="subs-count"></span></div>
-          <div class="subs-map-note" style="margin-bottom:14px">Note: reviewer counts reflect review assignments recorded in OJS only. Some reviewers are contacted outside the system, so the true number of invited and completed reviews may be higher.</div>
           <div id="subs-timeline"></div>
         </div>
       </div>
@@ -1514,23 +1517,6 @@ function showLoader(show, wrapperId){
 /* ============================================
    SUBMISSIONS TAB
 ============================================ */
-var COUNTRY_NAMES = {
-  AF:'Afghanistan',AL:'Albania',DZ:'Algeria',AR:'Argentina',AM:'Armenia',AU:'Australia',AT:'Austria',AZ:'Azerbaijan',
-  BH:'Bahrain',BD:'Bangladesh',BY:'Belarus',BE:'Belgium',BO:'Bolivia',BA:'Bosnia and Herzegovina',BR:'Brazil',BG:'Bulgaria',
-  KH:'Cambodia',CM:'Cameroon',CA:'Canada',CL:'Chile',CN:'China',CO:'Colombia',CR:'Costa Rica',HR:'Croatia',CU:'Cuba',CY:'Cyprus',CZ:'Czechia',
-  DK:'Denmark',DO:'Dominican Republic',EC:'Ecuador',EG:'Egypt',EE:'Estonia',ET:'Ethiopia',
-  FI:'Finland',FR:'France',GE:'Georgia',DE:'Germany',GH:'Ghana',GR:'Greece',GT:'Guatemala',
-  HK:'Hong Kong',HU:'Hungary',IS:'Iceland',IN:'India',ID:'Indonesia',IR:'Iran',IQ:'Iraq',IE:'Ireland',IL:'Israel',IT:'Italy',
-  JM:'Jamaica',JP:'Japan',JO:'Jordan',KZ:'Kazakhstan',KE:'Kenya',KR:'South Korea',KW:'Kuwait',
-  LV:'Latvia',LB:'Lebanon',LT:'Lithuania',LU:'Luxembourg',MY:'Malaysia',MT:'Malta',MX:'Mexico',MD:'Moldova',MA:'Morocco',
-  NP:'Nepal',NL:'Netherlands',NZ:'New Zealand',NG:'Nigeria',MK:'North Macedonia',NO:'Norway',
-  OM:'Oman',PK:'Pakistan',PS:'Palestine',PA:'Panama',PE:'Peru',PH:'Philippines',PL:'Poland',PT:'Portugal',QA:'Qatar',
-  RO:'Romania',RU:'Russia',SA:'Saudi Arabia',RS:'Serbia',SG:'Singapore',SK:'Slovakia',SI:'Slovenia',ZA:'South Africa',ES:'Spain',LK:'Sri Lanka',SE:'Sweden',CH:'Switzerland',
-  TW:'Taiwan',TZ:'Tanzania',TH:'Thailand',TN:'Tunisia',TR:'Türkiye',UG:'Uganda',UA:'Ukraine',AE:'United Arab Emirates',GB:'United Kingdom',US:'United States',UY:'Uruguay',
-  UZ:'Uzbekistan',VE:'Venezuela',VN:'Vietnam',ZM:'Zambia',ZW:'Zimbabwe'
-};
-function countryName(code){ return COUNTRY_NAMES[code] || code; }
-
 function setSSort(mode){
   currentSSort = mode;
   ['newest','oldest'].forEach(function(m){
@@ -1580,20 +1566,16 @@ async function loadSubmissions(){
   document.getElementById('s-sum-total').textContent = fmtNum(subs.length);
   var totals = data.totals || {};
   document.getElementById('s-sum-published').textContent = fmtNum(totals.published || 0);
-  var ri = totals.reviewsInvited || 0, rc = totals.reviewsCompleted || 0;
-  document.getElementById('s-sum-reviews').textContent = (ri||rc) ? (rc + ' / ' + ri) : '—';
-  var countryCount = Object.keys(data.byCountry||{}).length;
-  document.getElementById('s-sum-countries').textContent = fmtNum(countryCount);
+  document.getElementById('s-sum-accepted').textContent = fmtNum(totals.accepted || 0);
+  document.getElementById('s-sum-declined').textContent = fmtNum(totals.declined || 0);
+  document.getElementById('s-sum-review').textContent = fmtNum(totals.underReview || 0);
   if (dated.length){
     document.getElementById('s-sum-first').textContent  = fmtDate(dated[0].dateSubmitted);
     document.getElementById('s-sum-latest').textContent = fmtDate(dated[dated.length-1].dateSubmitted);
   }
-  var top = Object.keys(data.byCountry||{}).sort(function(a,b){ return data.byCountry[b]-data.byCountry[a]; })[0];
-  document.getElementById('s-sum-topcountry').textContent = top ? countryName(top) : '—';
 
   renderSubsMonthChart();
   renderSubsTimeline();
-  await renderSubsMap();
 
   setLoaderStep('render','done','s');
   setLoaderProgress(100, 's-loader-progress-bar');
@@ -1614,6 +1596,26 @@ function renderSubsMonthChart(){
   var el = document.getElementById('subs-month-chart');
   if (!months.length){ el.innerHTML = '<div style="color:var(--text-muted);font-size:12px">No dated submissions.</div>'; return; }
 
+  // Status segments, drawn bottom-to-top, with their colours.
+  var STATUSES = [
+    { key: 'Published',    color: '#15803d' },
+    { key: 'Accepted',     color: '#7c3aed' },
+    { key: 'Under review', color: '#1e8bc3' },
+    { key: 'Declined',     color: '#dc2626' }
+  ];
+
+  // Normalise a month value to a {status: count} object. Supports the old
+  // plain-number format (counts everything as "Under review") for safety.
+  function counts(m){
+    var v = byMonth[m];
+    if (typeof v === 'number') return { 'Under review': v };
+    return v || {};
+  }
+  function total(m){
+    var c = counts(m);
+    return STATUSES.reduce(function(s,st){ return s + (c[st.key]||0); }, 0);
+  }
+
   // Fill gaps between first and last month so the timeline is continuous.
   function addMonth(ym, n){
     var y=parseInt(ym.slice(0,4),10), m=parseInt(ym.slice(5,7),10)-1+n;
@@ -1624,26 +1626,72 @@ function renderSubsMonthChart(){
   while (full[full.length-1] !== months[months.length-1] && guard++ < 240){
     full.push(addMonth(full[full.length-1], 1));
   }
-  var vals = full.map(function(m){ return byMonth[m]||0; });
-  var maxV = Math.max.apply(null, vals) || 1;
+
+  var maxV = Math.max.apply(null, full.map(total)) || 1;
+  function niceMax(v){
+    if (v <= 4) return Math.max(v, 1);
+    if (v <= 5) return 5;
+    return Math.ceil(v / 5) * 5;
+  }
+  var axisMax = niceMax(maxV);
+  var CHART_H = 140;
 
   var names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function lbl(m){ return names[parseInt(m.slice(5,7),10)-1] + " '" + m.slice(2,4); }
 
-  var bars = full.map(function(m,i){
-    var v = vals[i];
-    var h = (v/maxV)*120;
-    return '<div class="subs-bar-col" title="'+lbl(m)+': '+v+' submission'+(v!==1?'s':'')+'">'
-      + (v>0 ? '<span class="subs-bar-val">'+v+'</span>' : '')
-      + '<div class="subs-bar" style="height:'+h.toFixed(1)+'px"></div>'
+  var ticks = [0, Math.round(axisMax/2), axisMax].filter(function(t,i,a){ return a.indexOf(t)===i; });
+  var yAxis = '<div class="subs-yaxis">' + ticks.slice().reverse().map(function(t){
+    return '<div class="subs-ytick"><span class="subs-ytick-label">'+t+'</span></div>';
+  }).join('') + '</div>';
+  var gridlines = ticks.map(function(t){
+    var bottom = (t/axisMax)*CHART_H;
+    return '<div class="subs-gridline" style="bottom:'+bottom.toFixed(1)+'px"></div>';
+  }).join('');
+
+  var bars = full.map(function(m){
+    var c = counts(m);
+    var tot = total(m);
+    // Build stacked segments bottom-up.
+    var segs = STATUSES.map(function(st){
+      var n = c[st.key]||0;
+      if (!n) return '';
+      var segH = (n/axisMax)*CHART_H;
+      return '<div class="subs-seg" style="height:'+segH.toFixed(2)+'px;background:'+st.color+'" '
+        + 'title="'+lbl(m)+' — '+escH(st.key)+': '+n+'"></div>';
+    }).join('');
+    var titleParts = STATUSES.filter(function(st){ return c[st.key]; })
+      .map(function(st){ return st.key+': '+c[st.key]; });
+    return '<div class="subs-bar-col" title="'+lbl(m)+' ('+tot+' total)'
+      + (titleParts.length ? ' — '+escH(titleParts.join(', ')) : '')+'">'
+      + (tot>0 ? '<span class="subs-bar-val">'+tot+'</span>' : '')
+      + '<div class="subs-bar-stack">'+segs+'</div>'
       + '</div>';
   }).join('');
+
   var labels = full.map(function(m,i){
     var show = full.length <= 14 || i===0 || i===full.length-1 || m.slice(5)==='01';
     return '<div class="subs-bar-label">'+(show?lbl(m):'')+'</div>';
   }).join('');
 
-  el.innerHTML = '<div class="subs-bars">'+bars+'</div><div class="subs-bar-labels">'+labels+'</div>';
+  // Legend — only statuses that actually occur.
+  var present = STATUSES.filter(function(st){
+    return full.some(function(m){ return (counts(m)[st.key]||0) > 0; });
+  });
+  var legend = '<div class="subs-chart-legend">' + present.map(function(st){
+    return '<span class="subs-cl-item"><span class="subs-cl-swatch" style="background:'+st.color+'"></span>'+escH(st.key)+'</span>';
+  }).join('') + '</div>';
+
+  el.innerHTML =
+    '<div class="subs-chart">'
+    +   yAxis
+    +   '<div class="subs-plot">'
+    +     '<div class="subs-grid" style="height:'+CHART_H+'px">'+gridlines+'</div>'
+    +     '<div class="subs-bars" style="height:'+CHART_H+'px">'+bars+'</div>'
+    +     '<div class="subs-bar-labels">'+labels+'</div>'
+    +     '<div class="subs-yaxis-title">Submissions</div>'
+    +   '</div>'
+    + '</div>'
+    + legend;
 }
 
 function renderSubsTimeline(){
@@ -1662,38 +1710,14 @@ function renderSubsTimeline(){
       ? '<a href="https://doi.org/'+escH(s.doi)+'" target="_blank" class="subs-tl-title">'+escH(s.title||('Submission #'+s.id))+'</a>'
       : '<span class="subs-tl-title">'+escH(s.title||('Submission #'+s.id))+'</span>';
 
-    // Status badge (coloured by state).
-    var st = s.status || '';
+    // Status badge — one of: Published, Accepted, Declined, Under review.
+    var st = s.status || 'Under review';
     var stClass = 'subs-badge-status';
-    if (s.isPublished || st==='Published') stClass += ' is-published';
+    if (st==='Published') stClass += ' is-published';
+    else if (st==='Accepted') stClass += ' is-scheduled';
     else if (st==='Declined') stClass += ' is-declined';
-    else if (st==='Scheduled') stClass += ' is-scheduled';
     else stClass += ' is-progress';
-    var badges = '';
-    if (st) badges += '<span class="'+stClass+'">'+escH(st)+'</span>';
-
-    // Reviews: invited / completed (+ declined if any).
-    if (s.reviewsInvited != null && (s.reviewsInvited>0 || s.reviewsCompleted>0)) {
-      var rev = s.reviewsCompleted + '/' + s.reviewsInvited + ' reviews';
-      var revTitle = s.reviewsCompleted + ' completed of ' + s.reviewsInvited + ' invited'
-        + (s.reviewsDeclined ? ', ' + s.reviewsDeclined + ' declined' : '');
-      badges += '<span class="subs-badge" title="'+escH(revTitle)+'">👥 '+escH(rev)+'</span>';
-    }
-    if (s.reviewRounds > 0)
-      badges += '<span class="subs-badge" title="Review rounds">🔄 '+s.reviewRounds+' round'+(s.reviewRounds!==1?'s':'')+'</span>';
-
-    // Latest decision — but skip it when it just repeats the status badge
-    // (e.g. status "Declined" + decision "Declined", or Published/Published).
-    if (s.decision && s.decision !== st)
-      badges += '<span class="subs-badge subs-badge-decision" title="'+(s.decisionDate?('Decided '+escH(s.decisionDate)):'')+'">⚖ '+escH(s.decision)+'</span>';
-
-    // Author countries.
-    if (s.countries && s.countries.length){
-      var uniq = s.countries.filter(function(c,idx){ return s.countries.indexOf(c)===idx; });
-      badges += uniq.map(function(c){
-        return '<span class="subs-badge subs-badge-country" title="'+escH(countryName(c))+'">'+escH(c)+'</span>';
-      }).join('');
-    }
+    var badges = '<span class="'+stClass+'">'+escH(st)+'</span>';
 
     // Per-submission event timeline (Submitted → … → Published).
     var tl = '';
@@ -1715,109 +1739,6 @@ function renderSubsTimeline(){
       + '</div>'
       + '</div>';
   }).join('');
-}
-
-async function renderSubsMap(){
-  var byCountry = (SUBS_DATA && SUBS_DATA.byCountry) || {};
-  var codes = Object.keys(byCountry);
-  var noteEl = document.getElementById('subs-map-note');
-  var mapEl = document.getElementById('subs-map');
-  var legendEl = document.getElementById('subs-country-legend');
-
-  if (!codes.length){
-    noteEl.textContent = 'No author country data available.';
-    mapEl.innerHTML = ''; legendEl.innerHTML = '';
-    return;
-  }
-
-  var total = codes.reduce(function(s,c){ return s+byCountry[c]; },0);
-  var maxC = Math.max.apply(null, codes.map(function(c){ return byCountry[c]; }));
-  noteEl.textContent = total + ' author' + (total!==1?'s':'') + ' across ' + codes.length + ' countr' + (codes.length!==1?'ies':'y') + '.';
-
-  // Colour scale: light blue -> deep blue by count.
-  function colorFor(v){
-    var t = maxC>1 ? (v-1)/(maxC-1) : 1;     // 0..1
-    // interpolate #d4e9f5 -> #1e8bc3 -> #0d4f7a
-    function lerp(a,b,t){ return Math.round(a+(b-a)*t); }
-    var stops = [[212,233,245],[30,139,195],[13,79,122]];
-    var seg = t<0.5 ? 0 : 1;
-    var lt = t<0.5 ? t/0.5 : (t-0.5)/0.5;
-    var c1=stops[seg], c2=stops[seg+1];
-    return 'rgb('+lerp(c1[0],c2[0],lt)+','+lerp(c1[1],c2[1],lt)+','+lerp(c1[2],c2[2],lt)+')';
-  }
-
-  // Try to load a world map GeoJSON for a real choropleth; fall back to a
-  // ranked bar list if the CDN is unreachable.
-  var geo = await fetchJSON('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json', 8000);
-  var drewMap = false;
-  if (geo && window.topojson === undefined){
-    // world-atlas is TopoJSON; we need the topojson client to convert. Load it.
-    await new Promise(function(res){
-      var s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js';
-      s.onload=res; s.onerror=res; document.head.appendChild(s);
-    });
-  }
-
-  if (geo && window.topojson && window.topojson.feature){
-    try {
-      var fc = window.topojson.feature(geo, geo.objects.countries);
-      drewMap = drawChoropleth(mapEl, fc, byCountry, colorFor);
-    } catch(e){ drewMap = false; }
-  }
-
-  if (!drewMap){
-    // Fallback: ranked horizontal bars (still informative, no map).
-    mapEl.innerHTML = '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Map tiles unavailable — showing ranked list.</div>';
-  }
-
-  // Legend / ranked list (always shown, complements the map).
-  var sorted = codes.slice().sort(function(a,b){ return byCountry[b]-byCountry[a]; });
-  legendEl.innerHTML = sorted.map(function(c){
-    return '<span class="subs-cl-item"><span class="subs-cl-swatch" style="background:'+colorFor(byCountry[c])+'"></span>'
-      + escH(countryName(c)) + ' <span class="subs-cl-count">'+byCountry[c]+'</span></span>';
-  }).join('');
-}
-
-/* ISO numeric (used by world-atlas) -> ISO alpha-2, for matching our codes. */
-var ISO_N3_TO_A2 = {
-  "004":"AF","008":"AL","012":"DZ","032":"AR","051":"AM","036":"AU","040":"AT","031":"AZ","048":"BH","050":"BD","112":"BY","056":"BE","068":"BO","070":"BA","076":"BR","100":"BG","116":"KH","120":"CM","124":"CA","152":"CL","156":"CN","170":"CO","188":"CR","191":"HR","192":"CU","196":"CY","203":"CZ","208":"DK","214":"DO","218":"EC","818":"EG","233":"EE","231":"ET","246":"FI","250":"FR","268":"GE","276":"DE","288":"GH","300":"GR","320":"GT","344":"HK","348":"HU","352":"IS","356":"IN","360":"ID","364":"IR","368":"IQ","372":"IE","376":"IL","380":"IT","388":"JM","392":"JP","400":"JO","398":"KZ","404":"KE","410":"KR","414":"KW","428":"LV","422":"LB","440":"LT","442":"LU","458":"MY","470":"MT","484":"MX","498":"MD","504":"MA","524":"NP","528":"NL","554":"NZ","566":"NG","807":"MK","578":"NO","512":"OM","586":"PK","275":"PS","591":"PA","604":"PE","608":"PH","616":"PL","620":"PT","634":"QA","642":"RO","643":"RU","682":"SA","688":"RS","702":"SG","703":"SK","705":"SI","710":"ZA","724":"ES","144":"LK","752":"SE","756":"CH","158":"TW","834":"TZ","764":"TH","788":"TN","792":"TR","800":"UG","804":"UA","784":"AE","826":"GB","840":"US","858":"UY","860":"UZ","862":"VE","704":"VN","894":"ZM","716":"ZW"
-};
-
-function drawChoropleth(container, featureCollection, byCountry, colorFor){
-  // Equirectangular projection into a 640x320 viewBox.
-  var W=640, H=320;
-  function project(lon, lat){
-    return [ (lon+180)/360*W, (90-lat)/180*H ];
-  }
-  function pathForGeometry(geom){
-    var d='';
-    function ring(coords){
-      return coords.map(function(pt,i){
-        var p=project(pt[0],pt[1]);
-        return (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1);
-      }).join('')+'Z';
-    }
-    if (geom.type==='Polygon'){ geom.coordinates.forEach(function(r){ d+=ring(r); }); }
-    else if (geom.type==='MultiPolygon'){ geom.coordinates.forEach(function(poly){ poly.forEach(function(r){ d+=ring(r); }); }); }
-    return d;
-  }
-
-  var paths = featureCollection.features.map(function(f){
-    var n3 = String(f.id).padStart(3,'0');
-    var a2 = ISO_N3_TO_A2[n3];
-    var v = a2 && byCountry[a2];
-    var fill = v ? colorFor(v) : 'var(--bg-chip)';
-    var cls = v ? 'subs-map-country has-data' : 'subs-map-country';
-    var title = v ? (countryName(a2)+': '+v+' author'+(v!==1?'s':'')) : '';
-    var d = pathForGeometry(f.geometry);
-    if (!d) return '';
-    return '<path class="'+cls+'" d="'+d+'" fill="'+fill+'"'+(title?' ><title>'+escH(title)+'</title></path>':' />');
-  }).join('');
-
-  container.innerHTML = '<svg class="subs-map-svg" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+paths+'</svg>'
-    + '<div class="subs-map-scale"><span>Fewer</span><span class="subs-map-scale-grad"></span><span>More authors</span></div>';
-  return true;
 }
 
 /* ============================================
