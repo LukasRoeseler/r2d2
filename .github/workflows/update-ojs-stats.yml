@@ -37,10 +37,10 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add statistics/statistics-*.csv publications.json
+          git add statistics/statistics-*.csv publications.json submissions.json
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "chore: update statistics and publication list ($(date -u +%Y-%m-%d))"
+            git commit -m "chore: update statistics, publications, and submissions ($(date -u +%Y-%m-%d))"
             git push
           fi
