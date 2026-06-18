@@ -349,7 +349,31 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
   border-top-color: #1a1d20;
 }
 
-/* ── SUBMISSIONS TAB ── */
+/* ── submissions sidebar stats ── */
+.ssb-block { margin-bottom: 18px; }
+.ssb-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; }
+.ssb-total-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.ssb-total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
+.ssb-total-value { font-size: 26px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.ssb-breakdown { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.ssb-row { display: flex; align-items: center; gap: 7px; }
+.ssb-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ssb-name { font-size: 12px; color: var(--text-secondary); flex: 1; }
+.ssb-val { font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.ssb-bar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; gap: 1px; background: var(--border); }
+.ssb-bar-seg { height: 100%; }
+.ssb-stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.ssb-stat-label { font-size: 11.5px; color: var(--text-secondary); }
+.ssb-stat-value { font-size: 14px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+/* histogram */
+.s-hist-bars { display: flex; align-items: flex-end; gap: 3px; height: 60px; margin-bottom: 4px; }
+.s-hist-bar { flex: 1; background: var(--r2-blue); border-radius: 2px 2px 0 0; min-height: 2px; cursor: default; transition: opacity 0.15s; }
+.s-hist-bar:hover { opacity: 0.7; }
+.s-hist-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); }
+/* world map */
+#s-worldmap svg { width: 100%; height: auto; display: block; }
+#s-worldmap .wm-country { stroke: var(--bg); stroke-width: 0.3; cursor: default; }
+#s-worldmap .wm-country:hover { opacity: 0.75; }
 .subs-block { margin-bottom: 34px; }
 .subs-country-row { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
 .subs-country-name { flex: 0 0 180px; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -388,6 +412,7 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 .subs-tl-title { font-size: 14px; color: var(--text); line-height: 1.4; text-decoration: none; }
 a.subs-tl-title:hover { color: var(--r2-blue); }
 .subs-tl-nodate { color: var(--text-muted); font-style: italic; }
+.subs-tl-outcome { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
 .subs-tl-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
 .subs-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 4px; background: var(--bg-chip); color: var(--text-secondary); border: 1px solid var(--border); white-space: nowrap; }
 .subs-badge-decision { background: #fef3c7; color: #b45309; border-color: #fcd34d; }
@@ -521,14 +546,35 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
     </div>
 
     <div id="sidebar-subs-stats" style="display:none">
-      <div class="stat-row"><span class="stat-label">Total submissions</span><span class="stat-value" id="s-sum-total">—</span></div>
-      <div class="stat-row"><span class="stat-label">Published</span><span class="stat-value" id="s-sum-published">—</span></div>
-      <div class="stat-row"><span class="stat-label">Accepted</span><span class="stat-value" id="s-sum-accepted">—</span></div>
-      <div class="stat-row"><span class="stat-label">Declined</span><span class="stat-value" id="s-sum-declined">—</span></div>
-      <div class="stat-row"><span class="stat-label">Under review</span><span class="stat-value" id="s-sum-review">—</span></div>
-      <div class="stat-row"><span class="stat-label">Countries</span><span class="stat-value" id="s-sum-countries">—</span></div>
-      <div class="stat-row"><span class="stat-label">First submission</span><span class="stat-value" id="s-sum-first" style="font-size:13px">—</span></div>
-      <div class="stat-row"><span class="stat-label">Latest submission</span><span class="stat-value" id="s-sum-latest" style="font-size:13px">—</span></div>
+      <!-- Status breakdown -->
+      <div class="ssb-block">
+        <div class="ssb-total-row">
+          <span class="ssb-total-label">Submissions</span>
+          <span class="ssb-total-value" id="s-sum-total">—</span>
+        </div>
+        <div class="ssb-breakdown" id="s-sum-breakdown">
+          <div class="ssb-row"><span class="ssb-dot" style="background:#15803d"></span><span class="ssb-name">Published</span><span class="ssb-val" id="s-sum-published">—</span></div>
+          <div class="ssb-row"><span class="ssb-dot" style="background:#7c3aed"></span><span class="ssb-name">Accepted</span><span class="ssb-val" id="s-sum-accepted">—</span></div>
+          <div class="ssb-row"><span class="ssb-dot" style="background:#1e8bc3"></span><span class="ssb-name">Under review</span><span class="ssb-val" id="s-sum-review">—</span></div>
+          <div class="ssb-row"><span class="ssb-dot" style="background:#dc2626"></span><span class="ssb-name">Declined</span><span class="ssb-val" id="s-sum-declined">—</span></div>
+        </div>
+        <div class="ssb-bar" id="s-sum-bar"></div>
+      </div>
+      <!-- Median days -->
+      <div class="ssb-block">
+        <div class="ssb-stat-row"><span class="ssb-stat-label">Median days to publication</span><span class="ssb-stat-value" id="s-sum-meddays">—</span></div>
+        <div class="ssb-stat-row"><span class="ssb-stat-label">Countries</span><span class="ssb-stat-value" id="s-sum-countries">—</span></div>
+      </div>
+      <!-- Days-to-publication histogram -->
+      <div class="ssb-block" id="s-hist-block" style="display:none">
+        <div class="ssb-section-title">Days: submission → publication</div>
+        <div id="s-hist"></div>
+      </div>
+      <!-- World map -->
+      <div class="ssb-block" id="s-map-block" style="display:none">
+        <div class="ssb-section-title">Submitting countries</div>
+        <div id="s-worldmap"></div>
+      </div>
     </div>
 
     <div class="ojs-note" id="ojs-note">OJS stats: loading…</div>
@@ -1574,20 +1620,53 @@ async function loadSubmissions(){
 
   // Sidebar summary
   var subs = data.submissions || [];
-  var dated = subs.filter(function(s){ return s.dateSubmitted; });
-  document.getElementById('s-sum-total').textContent = fmtNum(subs.length);
   var totals = data.totals || {};
-  document.getElementById('s-sum-published').textContent = fmtNum(totals.published || 0);
-  document.getElementById('s-sum-accepted').textContent = fmtNum(totals.accepted || 0);
-  document.getElementById('s-sum-declined').textContent = fmtNum(totals.declined || 0);
-  document.getElementById('s-sum-review').textContent = fmtNum(totals.underReview || 0);
-  document.getElementById('s-sum-countries').textContent = fmtNum(totals.countries || Object.keys(data.byCountry||{}).length);
-  if (dated.length){
-    document.getElementById('s-sum-first').textContent  = fmtDate(dated[0].dateSubmitted);
-    document.getElementById('s-sum-latest').textContent = fmtDate(dated[dated.length-1].dateSubmitted);
+  var n = subs.length;
+  var nPub = totals.published || 0;
+  var nAcc = totals.accepted  || 0;
+  var nRev = totals.underReview || 0;
+  var nDec = totals.declined  || 0;
+  var nCountries = totals.countries || Object.keys(data.byCountry||{}).length;
+
+  document.getElementById('s-sum-total').textContent     = fmtNum(n);
+  document.getElementById('s-sum-published').textContent = fmtNum(nPub);
+  document.getElementById('s-sum-accepted').textContent  = fmtNum(nAcc);
+  document.getElementById('s-sum-review').textContent    = fmtNum(nRev);
+  document.getElementById('s-sum-declined').textContent  = fmtNum(nDec);
+  document.getElementById('s-sum-countries').textContent = fmtNum(nCountries);
+
+  // Stacked status bar
+  var barEl = document.getElementById('s-sum-bar');
+  if (n > 0) {
+    var segs = [
+      {n: nPub, c: '#15803d'}, {n: nAcc, c: '#7c3aed'},
+      {n: nRev, c: '#1e8bc3'}, {n: nDec, c: '#dc2626'}
+    ];
+    barEl.innerHTML = segs.filter(function(s){ return s.n > 0; }).map(function(s){
+      return '<div class="ssb-bar-seg" style="flex:'+s.n+';background:'+s.c+'"></div>';
+    }).join('');
   }
 
+  // Median days submission → publication
+  var daysArr = subs.filter(function(s){
+    return s.dateSubmitted && s.isPublished;
+  }).map(function(s){
+    var pub = s.timeline && s.timeline.filter(function(e){ return e.kind==='published'; })[0];
+    var pubDate = pub ? pub.date : null;
+    if (!pubDate) return null;
+    return Math.round((new Date(pubDate) - new Date(s.dateSubmitted)) / 86400000);
+  }).filter(function(d){ return d !== null && d >= 0; });
+  var medDays = '—';
+  if (daysArr.length) {
+    var sorted = daysArr.slice().sort(function(a,b){ return a-b; });
+    var mid = Math.floor(sorted.length/2);
+    medDays = sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid-1]+sorted[mid])/2);
+  }
+  document.getElementById('s-sum-meddays').textContent = medDays === '—' ? '—' : medDays + ' days';
+
   renderSubsMonthChart();
+  renderSubsHistogram(daysArr);
+  renderSubsSidebarMap();
   renderSubsCountries();
   renderSubsTimeline();
 
@@ -1640,6 +1719,131 @@ function renderSubsCountries(){
       + '<div class="subs-country-count">'+e[1]+'</div>'
       + '</div>';
   }).join('');
+}
+
+function renderSubsHistogram(daysArr){
+  var block = document.getElementById('s-hist-block');
+  var el = document.getElementById('s-hist');
+  if (!daysArr || !daysArr.length){ block.style.display = 'none'; return; }
+  block.style.display = '';
+  // Build bins of ~30 days width
+  var maxD = Math.max.apply(null, daysArr);
+  var binW = Math.max(14, Math.ceil(maxD / 8));
+  var nBins = Math.ceil((maxD + 1) / binW);
+  var bins = [];
+  for (var i = 0; i < nBins; i++) bins.push(0);
+  daysArr.forEach(function(d){ bins[Math.floor(d/binW)]++; });
+  var maxBin = Math.max.apply(null, bins) || 1;
+  el.innerHTML = '<div class="s-hist-bars">'
+    + bins.map(function(n, i){
+        var h = Math.max(2, Math.round((n/maxBin)*56));
+        var lo = i*binW, hi = (i+1)*binW-1;
+        return '<div class="s-hist-bar" style="height:'+h+'px" title="'+lo+'–'+hi+' days: '+n+' paper'+(n!==1?'s':'')+'"></div>';
+      }).join('')
+    + '</div>'
+    + '<div class="s-hist-labels"><span>0</span><span>'+Math.round(maxD/2)+'d</span><span>'+maxD+'d</span></div>';
+}
+
+async function renderSubsSidebarMap(){
+  var byCountry = (SUBS_DATA && SUBS_DATA.byCountry) || {};
+  var block = document.getElementById('s-map-block');
+  var el = document.getElementById('s-worldmap');
+  if (!Object.keys(byCountry).length){ block.style.display = 'none'; return; }
+  block.style.display = '';
+  el.innerHTML = '<div style="font-size:10px;color:var(--text-muted);padding:4px 0">Loading map…</div>';
+
+  // Load TopoJSON world data
+  var topo;
+  try {
+    topo = await fetchJSON('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+  } catch(e){}
+  if (!topo){ el.innerHTML = '<div style="font-size:10px;color:var(--text-muted)">Map unavailable.</div>'; return; }
+
+  // Simple TopoJSON → SVG path conversion (no D3 needed)
+  // Build an ISO numeric → alpha-2 lookup from our data
+  var N2A = {4:'AF',8:'AL',12:'DZ',24:'AO',32:'AR',36:'AU',40:'AT',50:'BD',56:'BE',68:'BO',76:'BR',100:'BG',
+    116:'KH',120:'CM',124:'CA',152:'CL',156:'CN',170:'CO',191:'HR',192:'CU',203:'CZ',208:'DK',218:'EC',
+    818:'EG',233:'EE',246:'FI',250:'FR',276:'DE',288:'GH',300:'GR',320:'GT',348:'HU',356:'IN',360:'ID',
+    364:'IR',368:'IQ',372:'IE',376:'IL',380:'IT',388:'JM',392:'JP',400:'JO',398:'KZ',404:'KE',410:'KR',
+    422:'LB',428:'LV',440:'LT',442:'LU',484:'MX',504:'MA',528:'NL',554:'NZ',566:'NG',578:'NO',512:'OM',
+    586:'PK',591:'PA',604:'PE',608:'PH',616:'PL',620:'PT',634:'QA',642:'RO',643:'RU',682:'SA',688:'RS',
+    702:'SG',703:'SK',705:'SI',710:'ZA',724:'ES',752:'SE',756:'CH',762:'TJ',764:'TH',788:'TN',792:'TR',
+    800:'UG',804:'UA',784:'AE',826:'GB',840:'US',858:'UY',860:'UZ',862:'VE',704:'VN',894:'ZM',716:'ZW',
+    446:'MO',344:'HK',158:'TW',275:'PS',807:'MK',498:'MD',496:'MN',780:'TT',144:'LK',470:'MT',380:'IT'};
+
+  var counts = byCountry;
+  var maxC = Math.max.apply(null, Object.values(counts).concat([1]));
+  var colorFor = function(iso2){
+    var n = counts[iso2]||0;
+    if (!n) return 'var(--bg-chip)';
+    var t = n/maxC;
+    // Interpolate from #bfdbfe (light blue) to #1e40af (dark blue)
+    var r = Math.round(191 + (30-191)*t);
+    var g = Math.round(219 + (64-219)*t);
+    var b = Math.round(254 + (175-254)*t);
+    return 'rgb('+r+','+g+','+b+')';
+  };
+
+  // Convert TopoJSON arcs to SVG paths using a simple Mercator projection
+  var W = 200, H = 110;
+  function project(lon, lat){
+    var x = (lon + 180) / 360 * W;
+    var latR = lat * Math.PI / 180;
+    var y = H/2 - (Math.log(Math.tan(Math.PI/4 + latR/2)) / Math.PI) * H * 0.72;
+    return [x, y];
+  }
+  // Decode delta-encoded arc
+  function decodeArc(arc){
+    var pts = [], x=0, y=0;
+    for (var i=0; i<arc.length; i++){
+      x += arc[i][0]; y += arc[i][1];
+      pts.push([x, y]);
+    }
+    return pts;
+  }
+  var transform = topo.transform || {scale:[1,1],translate:[0,0]};
+  var sx=transform.scale[0], sy=transform.scale[1], tx=transform.translate[0], ty=transform.translate[1];
+  function getArcPts(idx){
+    var rev = idx < 0;
+    var arc = topo.arcs[rev ? ~idx : idx];
+    var pts = decodeArc(arc);
+    if (rev) pts = pts.reverse();
+    return pts;
+  }
+  function ringPath(ring){
+    var d = '';
+    ring.forEach(function(idx){
+      var pts = getArcPts(idx);
+      pts.forEach(function(p, i){
+        var lon = p[0]*sx+tx, lat = p[1]*sy+ty;
+        var pr = project(lon, lat);
+        d += (i===0 ? 'M' : 'L') + pr[0].toFixed(2)+','+pr[1].toFixed(2);
+      });
+    });
+    return d + 'Z';
+  }
+  function featurePath(geom){
+    if (!geom) return '';
+    var arrs = geom.type === 'Polygon' ? [geom.arcs] : geom.arcs;
+    return arrs.map(function(poly){ return poly.map(ringPath).join(''); }).join('');
+  }
+
+  var geometries = topo.objects.countries.geometries;
+  var paths = geometries.map(function(geom){
+    var numId = String(geom.id);
+    var iso2 = N2A[numId] || '';
+    var n = counts[iso2] || 0;
+    var fill = colorFor(iso2);
+    var tip = iso2 ? (countryName(iso2) + (n ? ': '+n+' submission'+(n!==1?'s':'') : '')) : '';
+    var d = featurePath(geom);
+    if (!d) return '';
+    return '<path class="wm-country" d="'+d+'" fill="'+fill+'"'
+      + (tip ? ' title="'+escH(tip)+'"' : '')
+      + (n ? ' stroke="#fff" stroke-width="0.5"' : '')
+      + '/>';
+  }).join('');
+
+  el.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+paths+'</svg>';
 }
 
 function renderSubsMonthChart(){
@@ -1753,7 +1957,7 @@ function renderSubsTimeline(){
       ? '<a href="https://doi.org/'+escH(s.doi)+'" target="_blank" class="subs-tl-title">'+escH(s.title||('Submission #'+s.id))+'</a>'
       : '<span class="subs-tl-title">'+escH(s.title||('Submission #'+s.id))+'</span>';
 
-    // Status badge — one of: Published, Accepted, Declined, Under review.
+    // Status badge
     var st = s.status || 'Under review';
     var stClass = 'subs-badge-status';
     if (st==='Published') stClass += ' is-published';
@@ -1762,23 +1966,31 @@ function renderSubsTimeline(){
     else stClass += ' is-progress';
     var badges = '<span class="'+stClass+'">'+escH(st)+'</span>';
 
-    // Per-submission event timeline (Submitted → … → Published).
-    var tl = '';
-    if (s.timeline && s.timeline.length){
-      tl = '<div class="subs-events">' + s.timeline.map(function(ev){
-        return '<div class="subs-event subs-event-'+escH(ev.kind||'decision')+'">'
-          + '<span class="subs-event-dot"></span>'
-          + '<span class="subs-event-date">'+escH(fmtDate(ev.date))+'</span>'
-          + '<span class="subs-event-label">'+escH(ev.label)+'</span>'
-          + '</div>';
-      }).join('') + '</div>';
+    // Country badge
+    if (s.country) {
+      badges += '<span class="subs-badge subs-badge-country" title="'+escH(countryName(s.country))+'">'
+        + escH(flagEmoji(s.country)) + ' ' + escH(countryName(s.country)) + '</span>';
+    }
+
+    // Publication/acceptance date line (replaces timeline dots)
+    var dateLine = '';
+    if (s.timeline && s.timeline.length) {
+      var pubEv  = s.timeline.filter(function(e){ return e.kind==='published'; })[0];
+      var accEv  = s.timeline.filter(function(e){ return e.kind==='accepted';  })[0];
+      var decEv  = s.timeline.filter(function(e){ return e.kind==='declined';  })[0];
+      if (pubEv)
+        dateLine = '<div class="subs-tl-outcome">Published '+escH(fmtDate(pubEv.date))+'</div>';
+      else if (accEv)
+        dateLine = '<div class="subs-tl-outcome">Accepted '+escH(fmtDate(accEv.date))+'</div>';
+      else if (decEv)
+        dateLine = '<div class="subs-tl-outcome">Declined '+escH(fmtDate(decEv.date))+'</div>';
     }
 
     return '<div class="subs-tl-item" style="animation-delay:'+(Math.min(i,30)*0.02)+'s">'
       + '<div class="subs-tl-date">'+dateTxt+'</div>'
       + '<div><div>'+titleHtml+'</div>'
-      + (badges ? '<div class="subs-tl-badges">'+badges+'</div>' : '')
-      + tl
+      + '<div class="subs-tl-badges">'+badges+'</div>'
+      + dateLine
       + '</div>'
       + '</div>';
   }).join('');
