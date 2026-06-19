@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-19",
+  "generated": "2026-06-18",
   "submissions": [
     {
       "id": 9022,
@@ -9,288 +9,79 @@
       "status": "Published",
       "isPublished": true,
       "country": "DE",
-      "decision": "Published",
-      "decisionDate": "",
+      "countries": ["DE", "US", "NL"],
+      "decision": "Accept",
+      "decisionDate": "2026-01-20",
       "timeline": [
-        {
-          "date": "2025-10-17",
-          "label": "Submitted",
-          "kind": "submitted"
-        },
-        {
-          "date": "2025-10-20",
-          "label": "Published",
-          "kind": "published"
-        }
+        { "date": "2025-10-17", "label": "Submitted", "kind": "submitted" },
+        { "date": "2026-01-20", "label": "Accepted", "kind": "accepted" },
+        { "date": "2026-02-10", "label": "Published", "kind": "published" }
       ]
     },
     {
       "id": 9133,
       "title": "Perceptual Decoys Do Not Reliably Bias Choice: Boundary-Condition Evidence",
       "doi": "",
-      "dateSubmitted": "2025-11-15",
+      "dateSubmitted": "2025-10-28",
       "status": "Under review",
+      "isPublished": false,
+      "country": "GB",
+      "countries": ["GB", "DE"],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": [
+        { "date": "2025-10-28", "label": "Submitted", "kind": "submitted" }
+      ]
+    },
+    {
+      "id": 9300,
+      "title": "A Direct Replication of the Anchoring Effect in Numerical Estimation",
+      "doi": "",
+      "dateSubmitted": "2025-11-12",
+      "status": "Accepted",
       "isPublished": false,
       "country": "US",
-      "decision": "",
-      "decisionDate": "",
+      "countries": ["US"],
+      "decision": "Accept",
+      "decisionDate": "2026-04-02",
       "timeline": [
-        {
-          "date": "2025-11-15",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
-      ]
-    },
-    {
-      "id": 9337,
-      "title": "No evidence of differences between hierarchical versus distinction relations in self-based ACT exercises",
-      "doi": "",
-      "dateSubmitted": "2026-01-27",
-      "status": "Under review",
-      "isPublished": false,
-      "country": "CH",
-      "decision": "",
-      "decisionDate": "",
-      "timeline": [
-        {
-          "date": "2026-01-27",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
-      ]
-    },
-    {
-      "id": 9400,
-      "title": "Educational Systems and the Trade-Off between Labour Market Allocation and Equality of Educational Opportunity. A replication of Bol and van de Werfhorst (2013)",
-      "doi": "",
-      "dateSubmitted": "2026-02-25",
-      "status": "Under review",
-      "isPublished": false,
-      "country": "DE",
-      "decision": "",
-      "decisionDate": "",
-      "timeline": [
-        {
-          "date": "2026-02-25",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
-      ]
-    },
-    {
-      "id": 9414,
-      "title": "Reproduction and Replication of an Adversarial Stylometry Experiment",
-      "doi": "",
-      "dateSubmitted": "2026-03-04",
-      "status": "Under review",
-      "isPublished": false,
-      "country": "US",
-      "decision": "",
-      "decisionDate": "",
-      "timeline": [
-        {
-          "date": "2026-03-04",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
+        { "date": "2025-11-12", "label": "Submitted", "kind": "submitted" },
+        { "date": "2026-04-02", "label": "Accepted", "kind": "accepted" }
       ]
     },
     {
       "id": 9451,
-      "title": "Metamotivational Beliefs about Promotion and Prevention Focus: Replications of the American-Independent Conditions of Nguyen et al.’s (2021) Studies 2 and 3",
+      "title": "Metamotivational Beliefs about Promotion and Prevention Focus: Replications of the American-Independent Conditions of Nguyen et al.'s (2021) Studies 2 and 3",
       "doi": "",
       "dateSubmitted": "2026-03-28",
-      "status": "Declined",
-      "isPublished": false,
-      "country": "US",
-      "decision": "Declined",
-      "decisionDate": "",
-      "timeline": [
-        {
-          "date": "2026-03-28",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
-      ]
-    },
-    {
-      "id": 9577,
-      "title": "From Replication Rates to Replication Evidence",
-      "doi": "10.17879/replicationresearch-2026-9577",
-      "dateSubmitted": "2026-04-21",
-      "status": "Published",
-      "isPublished": true,
-      "country": "AT",
-      "decision": "Published",
-      "decisionDate": "",
-      "timeline": [
-        {
-          "date": "2026-04-21",
-          "label": "Submitted",
-          "kind": "submitted"
-        },
-        {
-          "date": "2026-04-30",
-          "label": "Published",
-          "kind": "published"
-        }
-      ]
-    },
-    {
-      "id": 9580,
-      "title": "Too Soon to Dismiss?",
-      "doi": "",
-      "dateSubmitted": "2026-04-22",
-      "status": "Under review",
+      "status": "Withdrawn",
       "isPublished": false,
       "country": "DE",
+      "countries": ["DE"],
       "decision": "",
       "decisionDate": "",
       "timeline": [
-        {
-          "date": "2026-04-22",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
-      ]
-    },
-    {
-      "id": 9607,
-      "title": "How to analyze a replication study",
-      "doi": "",
-      "dateSubmitted": "2026-04-30",
-      "status": "Under review",
-      "isPublished": false,
-      "country": "NL",
-      "decision": "",
-      "decisionDate": "",
-      "timeline": [
-        {
-          "date": "2026-04-30",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
-      ]
-    },
-    {
-      "id": 9615,
-      "title": "Are Redundant Labels Helpful during Category Learning? Replication of Lupyan, Rakison, & McClelland (2007)",
-      "doi": "",
-      "dateSubmitted": "2026-05-03",
-      "status": "Under review",
-      "isPublished": false,
-      "country": "US",
-      "decision": "",
-      "decisionDate": "",
-      "timeline": [
-        {
-          "date": "2026-05-03",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
-      ]
-    },
-    {
-      "id": 9658,
-      "title": "ISSUES AND CHALLENGES ON THE IMPLEMENTATION OF ALIVE  MADRASAH EDUCATION PROGRAM: BASIS FOR  INTERVENTION PROGRAM",
-      "doi": "",
-      "dateSubmitted": "2026-05-22",
-      "status": "Declined",
-      "isPublished": false,
-      "country": "PH",
-      "decision": "Declined",
-      "decisionDate": "",
-      "timeline": [
-        {
-          "date": "2026-05-22",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
-      ]
-    },
-    {
-      "id": 9692,
-      "title": "Re-analyzing ```I Hope to Hell Nothing Goes Back to The Way It Was Before'': COVID-19, Marginalization, and Native Nations'",
-      "doi": "",
-      "dateSubmitted": "2026-06-04",
-      "status": "Under review",
-      "isPublished": false,
-      "country": "US",
-      "decision": "",
-      "decisionDate": "",
-      "timeline": [
-        {
-          "date": "2026-06-04",
-          "label": "Submitted",
-          "kind": "submitted"
-        }
+        { "date": "2026-03-28", "label": "Submitted", "kind": "submitted" }
       ]
     }
   ],
   "byMonth": {
-    "2026-06": {
-      "Published": 0,
-      "Accepted": 0,
-      "Under review": 1,
-      "Declined": 0
-    },
-    "2026-05": {
-      "Published": 0,
-      "Accepted": 0,
-      "Under review": 1,
-      "Declined": 1
-    },
-    "2026-04": {
-      "Published": 1,
-      "Accepted": 0,
-      "Under review": 2,
-      "Declined": 0
-    },
-    "2026-03": {
-      "Published": 0,
-      "Accepted": 0,
-      "Under review": 1,
-      "Declined": 1
-    },
-    "2026-02": {
-      "Published": 0,
-      "Accepted": 0,
-      "Under review": 1,
-      "Declined": 0
-    },
-    "2026-01": {
-      "Published": 0,
-      "Accepted": 0,
-      "Under review": 1,
-      "Declined": 0
-    },
-    "2025-11": {
-      "Published": 0,
-      "Accepted": 0,
-      "Under review": 1,
-      "Declined": 0
-    },
-    "2025-10": {
-      "Published": 1,
-      "Accepted": 0,
-      "Under review": 0,
-      "Declined": 0
-    }
+    "2025-10": { "Published": 1, "Accepted": 0, "Under review": 1, "Declined": 0, "Withdrawn": 0 },
+    "2025-11": { "Published": 0, "Accepted": 1, "Under review": 0, "Declined": 0, "Withdrawn": 0 },
+    "2026-03": { "Published": 0, "Accepted": 0, "Under review": 0, "Declined": 0, "Withdrawn": 1 }
   },
   "byCountry": {
-    "US": 5,
-    "PH": 1,
-    "NL": 1,
     "DE": 3,
-    "AT": 1,
-    "CH": 1
+    "US": 2,
+    "NL": 1,
+    "GB": 1
   },
   "totals": {
-    "published": 2,
-    "accepted": 0,
-    "declined": 2,
-    "underReview": 8,
-    "countries": 6
+    "published": 1,
+    "accepted": 1,
+    "declined": 0,
+    "underReview": 1,
+    "withdrawn": 1,
+    "countries": 4
   }
 }
