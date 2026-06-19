@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-18",
+  "generated": "2026-06-19",
   "submissions": [
     {
       "id": 9022,
@@ -8,7 +8,7 @@
       "dateSubmitted": "2025-10-17",
       "status": "Published",
       "isPublished": true,
-      "country": "",
+      "country": "DE",
       "decision": "Published",
       "decisionDate": "",
       "timeline": [
@@ -31,7 +31,7 @@
       "dateSubmitted": "2025-11-15",
       "status": "Under review",
       "isPublished": false,
-      "country": "",
+      "country": "US",
       "decision": "",
       "decisionDate": "",
       "timeline": [
@@ -49,7 +49,7 @@
       "dateSubmitted": "2026-01-27",
       "status": "Under review",
       "isPublished": false,
-      "country": "",
+      "country": "CH",
       "decision": "",
       "decisionDate": "",
       "timeline": [
@@ -67,7 +67,7 @@
       "dateSubmitted": "2026-02-25",
       "status": "Under review",
       "isPublished": false,
-      "country": "",
+      "country": "DE",
       "decision": "",
       "decisionDate": "",
       "timeline": [
@@ -85,7 +85,7 @@
       "dateSubmitted": "2026-03-04",
       "status": "Under review",
       "isPublished": false,
-      "country": "",
+      "country": "US",
       "decision": "",
       "decisionDate": "",
       "timeline": [
@@ -103,7 +103,7 @@
       "dateSubmitted": "2026-03-28",
       "status": "Declined",
       "isPublished": false,
-      "country": "",
+      "country": "US",
       "decision": "Declined",
       "decisionDate": "",
       "timeline": [
@@ -121,7 +121,7 @@
       "dateSubmitted": "2026-04-21",
       "status": "Published",
       "isPublished": true,
-      "country": "",
+      "country": "AT",
       "decision": "Published",
       "decisionDate": "",
       "timeline": [
@@ -144,7 +144,7 @@
       "dateSubmitted": "2026-04-22",
       "status": "Under review",
       "isPublished": false,
-      "country": "",
+      "country": "DE",
       "decision": "",
       "decisionDate": "",
       "timeline": [
@@ -162,7 +162,7 @@
       "dateSubmitted": "2026-04-30",
       "status": "Under review",
       "isPublished": false,
-      "country": "",
+      "country": "NL",
       "decision": "",
       "decisionDate": "",
       "timeline": [
@@ -180,7 +180,7 @@
       "dateSubmitted": "2026-05-03",
       "status": "Under review",
       "isPublished": false,
-      "country": "",
+      "country": "US",
       "decision": "",
       "decisionDate": "",
       "timeline": [
@@ -198,7 +198,7 @@
       "dateSubmitted": "2026-05-22",
       "status": "Declined",
       "isPublished": false,
-      "country": "",
+      "country": "PH",
       "decision": "Declined",
       "decisionDate": "",
       "timeline": [
@@ -216,7 +216,7 @@
       "dateSubmitted": "2026-06-04",
       "status": "Under review",
       "isPublished": false,
-      "country": "",
+      "country": "US",
       "decision": "",
       "decisionDate": "",
       "timeline": [
@@ -278,12 +278,19 @@
       "Declined": 0
     }
   },
-  "byCountry": {},
+  "byCountry": {
+    "US": 5,
+    "PH": 1,
+    "NL": 1,
+    "DE": 3,
+    "AT": 1,
+    "CH": 1
+  },
   "totals": {
     "published": 2,
     "accepted": 0,
     "declined": 2,
     "underReview": 8,
-    "countries": 0
+    "countries": 6
   }
 }
