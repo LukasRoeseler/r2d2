@@ -94,6 +94,28 @@ def to_iso2(value):
     return _NAME_TO_ISO2.get(v.lower(), "")
 
 
+# Manual status overrides. Maps a case-insensitive title substring to a status
+# that overrides whatever OJS reports. Use this for editorial states OJS does
+# not track (e.g. a paper withdrawn by the authors after submission).
+STATUS_OVERRIDES = [
+    ("metamotivational beliefs about promotion and prevention focus",
+     "Withdrawn"),
+]
+
+
+def apply_status_overrides(details):
+    """Force the status of specific submissions, matched by title substring."""
+    for d in details:
+        title = (d.get("title") or "").lower()
+        for needle, new_status in STATUS_OVERRIDES:
+            if needle in title:
+                d["status"] = new_status
+                d["isPublished"] = False
+                print("  [override] '%s...' -> status '%s'"
+                      % (d.get("title", "")[:40], new_status))
+                break
+
+
 API_KEY = os.environ.get("OJS_API_KEY", "").strip()
 if not API_KEY:
     print("ERROR: OJS_API_KEY environment variable is not set.", file=sys.stderr)
@@ -449,17 +471,21 @@ def get_submission_detail(sub_id):
     # on the publication's author records. Find the submitter and look it up.
     submitter_id = get_submitter_user_id(data, sub_id)
     country = get_user_country(submitter_id)
-    # Fallback: if the submitter profile had no usable country, try the
-    # first author's country field on the publication.
-    if not country and pub:
+
+    # Collect ALL author countries from the publication's author records.
+    all_countries = []
+    if pub:
         for author in (pub.get("authors") or []):
             ac = author.get("country")
             if isinstance(ac, dict):
                 ac = first_locale_value(ac)
             ac = (ac or "").strip().upper()
             if len(ac) == 2 and ac.isalpha():
-                country = ac
-                break
+                all_countries.append(ac)
+
+    # Fallback for the primary country: first author with a country.
+    if not country and all_countries:
+        country = all_countries[0]
 
     # ---- Status ----------------------------------------------------------
     # OJS submission status: 1=queued, 3=published, 4=declined, 5=scheduled.
@@ -551,6 +577,7 @@ def get_submission_detail(sub_id):
         "doi": doi,
         "dateSubmitted": date_submitted,
         "country": country,
+        "countries": all_countries,
         "status": status_label,
         "isPublished": is_published,
         "decision": decision_label,
@@ -700,8 +727,9 @@ def write_submissions_json(details, path="submissions.json"):
         print("  filtered out %d test/placeholder submission(s)." % dropped)
 
     # Per-month submission counts, broken down by status (YYYY-MM ->
-    # {Published, Accepted, "Under review", Declined}).
-    STATUS_KEYS = ["Published", "Accepted", "Under review", "Declined"]
+    # {Published, Accepted, "Under review", Declined, Withdrawn}).
+    STATUS_KEYS = ["Published", "Accepted", "Under review", "Declined",
+                   "Withdrawn"]
     by_month = {}
     for d in details:
         ds = d.get("dateSubmitted") or ""
@@ -715,12 +743,16 @@ def write_submissions_json(details, path="submissions.json"):
             by_month[ym] = {k: 0 for k in STATUS_KEYS}
         by_month[ym][st] += 1
 
-    # Country totals across submissions (ISO alpha-2 code -> n).
+    # Country totals across submissions. Count every distinct author country
+    # per submission (so a paper with authors from DE and US adds to both).
     by_country = {}
     for d in details:
-        c = (d.get("country") or "").strip().upper()
-        if c:
-            by_country[c] = by_country.get(c, 0) + 1
+        seen = set()
+        for c in (d.get("countries") or ([d.get("country")] if d.get("country") else [])):
+            c = (c or "").strip().upper()
+            if c and c not in seen:
+                seen.add(c)
+                by_country[c] = by_country.get(c, 0) + 1
 
     # Aggregate totals for the sidebar.
     totals = {
@@ -729,6 +761,7 @@ def write_submissions_json(details, path="submissions.json"):
         "declined": sum(1 for d in details if d.get("status") == "Declined"),
         "underReview": sum(1 for d in details
                            if d.get("status") == "Under review"),
+        "withdrawn": sum(1 for d in details if d.get("status") == "Withdrawn"),
         "countries": len(by_country),
     }
 
@@ -740,6 +773,7 @@ def write_submissions_json(details, path="submissions.json"):
               "status": d.get("status", ""),
               "isPublished": d.get("isPublished", False),
               "country": d.get("country", ""),
+              "countries": d.get("countries", []),
               "decision": d.get("decision", ""),
               "decisionDate": d.get("decisionDate", ""),
               "timeline": d.get("timeline", [])} for d in details],
@@ -833,10 +867,26 @@ def main():
         # take priority over API-detected countries in the dashboard.
         country_map = merge_country_csv(submission_details)
         for d in submission_details:
+            # Build the final country list: manual CSV entry (which may be a
+            # semicolon-separated list of names/codes) unioned with the
+            # author countries detected from the API. Manual entries first.
+            codes = []
             manual = country_map.get(str(d["id"]))
             if manual:
-                code = to_iso2(manual)
-                d["country"] = code if code else d.get("country", "")
+                for part in manual.split(";"):
+                    code = to_iso2(part)
+                    if code and code not in codes:
+                        codes.append(code)
+            for c in d.get("countries", []):
+                if c and c not in codes:
+                    codes.append(c)
+            d["countries"] = codes
+            # Primary country = first in the list (used by byCountry totals).
+            d["country"] = codes[0] if codes else ""
+
+        # Apply manual status overrides (e.g. papers withdrawn after the fact).
+        apply_status_overrides(submission_details)
+
         write_submissions_json(submission_details)
 
     # ---- Per-article monthly usage CSV ---------------------------------
