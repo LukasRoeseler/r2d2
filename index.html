@@ -432,6 +432,20 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
 .subs-badge-status.is-withdrawn { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
 .subs-flag { font-size: 16px; line-height: 1; cursor: default; margin-left: 2px; vertical-align: middle; }
 
+/* ── editorial team ── */
+.team-group { margin-bottom: 30px; }
+.team-group-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px; padding-bottom: 7px; border-bottom: 2px solid var(--border-mid); }
+.team-group-count { color: var(--text-muted); font-weight: 600; font-size: 13px; }
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.team-card { border: 1px solid var(--border); border-radius: 8px; padding: 13px 15px; background: var(--bg); transition: box-shadow 0.15s, border-color 0.15s; }
+.team-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.06); border-color: var(--border-mid); }
+.team-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.team-flag { font-size: 18px; line-height: 1; }
+.team-name { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.team-role { font-size: 12px; color: var(--r2-blue-deep); font-weight: 600; margin-bottom: 5px; line-height: 1.35; }
+.team-aff { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.team-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
 /* per-submission event timeline */
 .subs-events { margin-top: 11px; padding-left: 6px; border-left: 2px solid var(--border); display: flex; flex-direction: column; gap: 0; }
 .subs-event { display: flex; align-items: baseline; gap: 9px; padding: 3px 0 7px 12px; position: relative; }
@@ -600,6 +614,38 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
       </div>
     </div>
 
+    <div id="sidebar-team-stats" style="display:none">
+      <div class="ssb-block">
+        <div class="ssb-total-row">
+          <span class="ssb-total-label">Team members</span>
+          <span class="ssb-total-value" id="t-sum-total">—</span>
+        </div>
+        <div class="ssb-stat-row"><span class="ssb-stat-label">Core editorial team</span><span class="ssb-stat-value" id="t-sum-core">—</span></div>
+        <div class="ssb-stat-row"><span class="ssb-stat-label">Advisory board</span><span class="ssb-stat-value" id="t-sum-advisory">—</span></div>
+        <div class="ssb-stat-row"><span class="ssb-stat-label">Countries</span><span class="ssb-stat-value" id="t-sum-countries">—</span></div>
+      </div>
+      <!-- Core team map -->
+      <div class="ssb-block" id="t-core-map-block" style="display:none">
+        <div class="ssb-section-title">Core team countries</div>
+        <div id="t-core-map"></div>
+      </div>
+      <!-- Advisory board map -->
+      <div class="ssb-block" id="t-adv-map-block" style="display:none">
+        <div class="ssb-section-title">Advisory board countries</div>
+        <div id="t-adv-map"></div>
+      </div>
+      <!-- Gender breakdown (shown if data present) -->
+      <div class="ssb-block" id="t-gender-block" style="display:none">
+        <div class="ssb-section-title">Gender</div>
+        <div id="t-gender"></div>
+      </div>
+      <!-- Career stage breakdown (shown if data present) -->
+      <div class="ssb-block" id="t-career-block" style="display:none">
+        <div class="ssb-section-title">Career stage</div>
+        <div id="t-career"></div>
+      </div>
+    </div>
+
     <div class="ojs-note" id="ojs-note">OJS stats: loading…</div>
     <button class="refresh-btn" id="refresh-btn" onclick="handleRefresh()">↺ Refresh</button>
 
@@ -626,6 +672,11 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
       <div class="legend-item"><span class="legend-dot" style="background:#1e8bc3"></span>OJS REST API (submissions, dates)</div>
       <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>OJS editorial decisions (status, timeline)</div>
     </div>
+    <div class="source-legend" id="legend-team" style="display:none">
+      <div class="legend-title">Data sources</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#1e8bc3"></span>editorial_team.csv (manually maintained)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#0ea47a"></span>Country derived from institution</div>
+    </div>
   </aside>
 
   <main>
@@ -634,6 +685,7 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
       <button class="tab-btn active" id="tab-ojs" onclick="switchTab('ojs')">Published Articles</button>
       <button class="tab-btn" id="tab-subs" onclick="switchTab('subs')">Submissions</button>
       <button class="tab-btn" id="tab-zenodo" onclick="switchTab('zenodo')">R2 Zenodo Community</button>
+      <button class="tab-btn" id="tab-team" onclick="switchTab('team')">Editorial Team</button>
     </div>
 
     <!-- ── TAB: PUBLISHED ARTICLES ── -->
@@ -761,6 +813,23 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
 
       <div id="zenodo-list"></div>
     </div>
+
+    <div class="tab-panel" id="panel-team">
+      <div class="section-header">
+        <h2 class="section-title">Editorial Team</h2>
+      </div>
+      <div class="zenodo-intro">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e8bc3" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div>The people behind Replication Research, from the <a href="https://ejournals.uni-muenster.de/replicationresearch/about/editorialTeam" target="_blank">editorial team page ↗</a>. Country is derived from each person's institution. Gender and career stage are maintained manually in <code>editorial_team.csv</code>.</div>
+      </div>
+      <div class="status-bar">
+        <span class="status-dot loading" id="t-status-dot"></span>
+        <span id="t-status-text">Loading editorial team…</span>
+      </div>
+      <div id="team-content" style="display:none">
+        <div id="team-groups"></div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -780,6 +849,7 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
 ============================================ */
 var PUBS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/publications.json';
 var SUBS_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/submissions.json';
+var TEAM_URL  = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/editorial_team.csv';
 var STATS_DIR = 'https://api.github.com/repos/LukasRoeseler/r2d2/contents/statistics';
 var STATS_RAW = 'https://raw.githubusercontent.com/LukasRoeseler/r2d2/refs/heads/main/statistics/';
 var OJS_BASE  = 'https://ejournals.uni-muenster.de/index.php/replicationresearch/api/v1';
@@ -802,6 +872,8 @@ var currentZSort = 'newest';
 
 var SUBS_DATA = null;
 var SUBS_LOADED = false;
+var TEAM_LOADED = false;
+var TEAM_DATA = [];
 var currentSSort = 'newest';
 
 var ACTIVE_TAB = 'ojs';
@@ -854,7 +926,7 @@ function fmtDate(iso){
 ============================================ */
 function switchTab(tab){
   ACTIVE_TAB = tab;
-  ['ojs','subs','zenodo'].forEach(function(t){
+  ['ojs','subs','zenodo','team'].forEach(function(t){
     document.getElementById('tab-'+t).classList.toggle('active', tab===t);
     document.getElementById('panel-'+t).classList.toggle('active', tab===t);
   });
@@ -863,18 +935,22 @@ function switchTab(tab){
   document.getElementById('sidebar-ojs-stats').style.display = tab==='ojs' ? '' : 'none';
   document.getElementById('sidebar-subs-stats').style.display = tab==='subs' ? '' : 'none';
   document.getElementById('sidebar-zenodo-stats').style.display = tab==='zenodo' ? '' : 'none';
+  document.getElementById('sidebar-team-stats').style.display = tab==='team' ? '' : 'none';
   document.getElementById('legend-ojs').style.display = tab==='ojs' ? '' : 'none';
   document.getElementById('legend-subs').style.display = tab==='subs' ? '' : 'none';
   document.getElementById('legend-zenodo').style.display = tab==='zenodo' ? '' : 'none';
+  document.getElementById('legend-team').style.display = tab==='team' ? '' : 'none';
   document.getElementById('ojs-note').style.display = tab==='ojs' ? '' : 'none';
 
   if (tab==='zenodo' && !ZENODO_LOADED) loadZenodo();
   if (tab==='subs' && !SUBS_LOADED) loadSubmissions();
+  if (tab==='team' && !TEAM_LOADED) loadTeam();
 }
 
 function handleRefresh(){
   if (ACTIVE_TAB === 'ojs') loadAll();
   else if (ACTIVE_TAB === 'subs') loadSubmissions();
+  else if (ACTIVE_TAB === 'team') loadTeam();
   else loadZenodo();
 }
 
@@ -1867,22 +1943,32 @@ function renderSubsHistogram(daysArr){
 }
 
 async function renderSubsSidebarMap(){
-  var byCountry = (SUBS_DATA && SUBS_DATA.byCountry) || {};
-  var block = document.getElementById('s-map-block');
-  var el = document.getElementById('s-worldmap');
-  if (!Object.keys(byCountry).length){ block.style.display = 'none'; return; }
-  block.style.display = '';
+  return renderWorldMap('s-worldmap', (SUBS_DATA && SUBS_DATA.byCountry) || {},
+                        's-map-block', 'submission');
+}
+
+var _TOPO_CACHE = null;
+async function getWorldTopo(){
+  if (_TOPO_CACHE) return _TOPO_CACHE;
+  try {
+    _TOPO_CACHE = await fetchJSON('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+  } catch(e){}
+  return _TOPO_CACHE;
+}
+
+async function renderWorldMap(containerId, byCountry, blockId, noun){
+  noun = noun || 'submission';
+  var block = blockId ? document.getElementById(blockId) : null;
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  if (!Object.keys(byCountry).length){ if (block) block.style.display = 'none'; return; }
+  if (block) block.style.display = '';
   el.innerHTML = '<div style="font-size:10px;color:var(--text-muted);padding:4px 0">Loading map…</div>';
 
-  // Load TopoJSON world data
-  var topo;
-  try {
-    topo = await fetchJSON('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
-  } catch(e){}
+  var topo = await getWorldTopo();
   if (!topo){ el.innerHTML = '<div style="font-size:10px;color:var(--text-muted)">Map unavailable.</div>'; return; }
 
-  // Simple TopoJSON → SVG path conversion (no D3 needed)
-  // Build an ISO numeric → alpha-2 lookup from our data
+  // ISO numeric → alpha-2 lookup
   var N2A = {4:'AF',8:'AL',12:'DZ',24:'AO',32:'AR',36:'AU',40:'AT',50:'BD',56:'BE',68:'BO',76:'BR',100:'BG',
     116:'KH',120:'CM',124:'CA',152:'CL',156:'CN',170:'CO',191:'HR',192:'CU',203:'CZ',208:'DK',218:'EC',
     818:'EG',233:'EE',246:'FI',250:'FR',276:'DE',288:'GH',300:'GR',320:'GT',348:'HU',356:'IN',360:'ID',
@@ -1891,7 +1977,7 @@ async function renderSubsSidebarMap(){
     586:'PK',591:'PA',604:'PE',608:'PH',616:'PL',620:'PT',634:'QA',642:'RO',643:'RU',682:'SA',688:'RS',
     702:'SG',703:'SK',705:'SI',710:'ZA',724:'ES',752:'SE',756:'CH',762:'TJ',764:'TH',788:'TN',792:'TR',
     800:'UG',804:'UA',784:'AE',826:'GB',840:'US',858:'UY',860:'UZ',862:'VE',704:'VN',894:'ZM',716:'ZW',
-    446:'MO',344:'HK',158:'TW',275:'PS',807:'MK',498:'MD',496:'MN',780:'TT',144:'LK',470:'MT',380:'IT'};
+    446:'MO',344:'HK',158:'TW',275:'PS',807:'MK',498:'MD',496:'MN',780:'TT',144:'LK',470:'MT'};
 
   var counts = byCountry;
   var maxC = Math.max.apply(null, Object.values(counts).concat([1]));
@@ -1983,10 +2069,11 @@ async function renderSubsSidebarMap(){
     + '</div>';
 
   // Wire up pan/zoom + tooltip after the element is in the DOM.
-  setTimeout(function(){ initWorldMap(mapId, W, H); }, 0);
+  setTimeout(function(){ initWorldMap(mapId, W, H, noun); }, 0);
 }
 
-function initWorldMap(mapId, W, H){
+function initWorldMap(mapId, W, H, noun){
+  noun = noun || 'submission';
   var wrap = document.getElementById(mapId);
   if (!wrap) return;
   var svg = wrap.querySelector('.wm-svg');
@@ -2056,7 +2143,7 @@ function initWorldMap(mapId, W, H){
       var nm = path.getAttribute('data-name');
       if (!nm) { tip.style.display='none'; return; }
       var n = parseInt(path.getAttribute('data-count'),10) || 0;
-      tip.innerHTML = '<b>'+nm+'</b>' + (n ? '<br>'+n+' submission'+(n!==1?'s':'') : '<br>no submissions');
+      tip.innerHTML = '<b>'+nm+'</b>' + (n ? '<br>'+n+' '+noun+(n!==1?'s':'') : '<br>no '+noun+'s');
       tip.style.display = 'block';
       var wr = wrap.getBoundingClientRect();
       tip.style.left = (e.clientX - wr.left + 10) + 'px';
@@ -2223,6 +2310,157 @@ function renderSubsTimeline(){
       + '</div>';
   }).join('');
 }
+
+/* ============================================
+   EDITORIAL TEAM TAB
+============================================ */
+// Which role groups belong to the "core" editorial team vs the advisory board.
+var ADVISORY_GROUP = 'Advisory Board';
+
+async function loadTeam(){
+  var dot = document.getElementById('t-status-dot');
+  var txt = document.getElementById('t-status-text');
+  dot.className = 'status-dot loading';
+  txt.textContent = 'Loading editorial team…';
+
+  var csv = await fetchText(TEAM_URL);
+  if (!csv){
+    dot.className = 'status-dot error';
+    txt.textContent = 'Could not load editorial_team.csv — check it exists in the repo root.';
+    return;
+  }
+
+  // Parse CSV into rows of objects.
+  var lines = csv.split(/\r?\n/).filter(function(l){ return l.trim().length; });
+  if (!lines.length){ txt.textContent = 'editorial_team.csv is empty.'; return; }
+  var header = parseCSVLine(lines[0]).map(function(h){ return h.trim(); });
+  var rows = [];
+  for (var i=1;i<lines.length;i++){
+    var cols = parseCSVLine(lines[i]);
+    if (!cols.length) continue;
+    var obj = {};
+    header.forEach(function(h,idx){ obj[h] = (cols[idx]||'').trim(); });
+    if (obj.name) rows.push(obj);
+  }
+  TEAM_DATA = rows;
+  TEAM_LOADED = true;
+
+  renderTeam(rows);
+  renderTeamSidebar(rows);
+
+  dot.className = 'status-dot done';
+  txt.textContent = rows.length + ' role assignments · ' + countUnique(rows, 'name') + ' people';
+  document.getElementById('team-content').style.display = '';
+}
+
+function countUnique(rows, key){
+  var seen = {};
+  rows.forEach(function(r){ if (r[key]) seen[r[key]] = 1; });
+  return Object.keys(seen).length;
+}
+
+// Render grouped people cards in the main panel.
+function renderTeam(rows){
+  var el = document.getElementById('team-groups');
+  // Preserve the group order as it first appears in the CSV.
+  var order = [];
+  var groups = {};
+  rows.forEach(function(r){
+    var g = r.role_group || 'Other';
+    if (!groups[g]){ groups[g] = []; order.push(g); }
+    groups[g].push(r);
+  });
+
+  el.innerHTML = order.map(function(g){
+    var people = groups[g];
+    var cards = people.map(function(p){
+      var flag = p.country ? '<span class="team-flag" title="'+escH(countryName(p.country))+'">'+escH(flagEmoji(p.country))+'</span>' : '';
+      var meta = [];
+      if (p.affiliation) meta.push(escH(p.affiliation));
+      var sub = [];
+      if (p.career_status) sub.push(escH(p.career_status));
+      if (p.gender) sub.push(escH(p.gender));
+      return '<div class="team-card">'
+        + '<div class="team-card-top">'+flag+'<span class="team-name">'+escH(p.name)+'</span></div>'
+        + (p.role_detail ? '<div class="team-role">'+escH(p.role_detail)+'</div>' : '')
+        + (meta.length ? '<div class="team-aff">'+meta.join(' · ')+'</div>' : '')
+        + (sub.length ? '<div class="team-sub">'+sub.join(' · ')+'</div>' : '')
+        + '</div>';
+    }).join('');
+    return '<div class="team-group">'
+      + '<div class="team-group-title">'+escH(g)+' <span class="team-group-count">('+people.length+')</span></div>'
+      + '<div class="team-grid">'+cards+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+// Sidebar: counts, two maps (core vs advisory), gender & career breakdowns.
+function renderTeamSidebar(rows){
+  // Dedup people for counts (a person in multiple roles counts once).
+  function uniquePeople(filterFn){
+    var seen = {};
+    rows.forEach(function(r){
+      if (filterFn(r) && r.name && !seen[r.name]) seen[r.name] = r;
+    });
+    return Object.values(seen);
+  }
+  var isAdvisory = function(r){ return r.role_group === ADVISORY_GROUP; };
+  var isCore     = function(r){ return r.role_group !== ADVISORY_GROUP; };
+
+  var allPeople = uniquePeople(function(){ return true; });
+  var corePeople = uniquePeople(isCore);
+  var advPeople  = uniquePeople(isAdvisory);
+
+  document.getElementById('t-sum-total').textContent = allPeople.length;
+  document.getElementById('t-sum-core').textContent = corePeople.length;
+  document.getElementById('t-sum-advisory').textContent = advPeople.length;
+
+  // Country counts (deduped people) for each grouping.
+  function countryCounts(people){
+    var c = {};
+    people.forEach(function(p){
+      var code = (p.country||'').toUpperCase();
+      if (code) c[code] = (c[code]||0)+1;
+    });
+    return c;
+  }
+  var allCountries = countryCounts(allPeople);
+  document.getElementById('t-sum-countries').textContent = Object.keys(allCountries).length;
+
+  // Two maps.
+  renderWorldMap('t-core-map', countryCounts(corePeople), 't-core-map-block', 'member');
+  renderWorldMap('t-adv-map',  countryCounts(advPeople),  't-adv-map-block',  'member');
+
+  // Gender breakdown (only if any gender filled in).
+  renderTeamBreakdown('t-gender-block', 't-gender', allPeople, 'gender');
+  // Career stage breakdown (only if any filled in).
+  renderTeamBreakdown('t-career-block', 't-career', allPeople, 'career_status');
+}
+
+function renderTeamBreakdown(blockId, elId, people, field){
+  var block = document.getElementById(blockId);
+  var el = document.getElementById(elId);
+  var counts = {};
+  var any = false;
+  people.forEach(function(p){
+    var v = (p[field]||'').trim();
+    if (v){ counts[v] = (counts[v]||0)+1; any = true; }
+  });
+  if (!any){ block.style.display = 'none'; return; }
+  block.style.display = '';
+  var entries = Object.keys(counts).map(function(k){ return [k,counts[k]]; })
+    .sort(function(a,b){ return b[1]-a[1]; });
+  var max = entries[0][1] || 1;
+  el.innerHTML = entries.map(function(e){
+    var pct = (e[1]/max)*100;
+    return '<div class="subs-country-row">'
+      + '<div class="subs-country-name" style="flex:0 0 110px">'+escH(e[0])+'</div>'
+      + '<div class="subs-country-track"><div class="subs-country-fill" style="width:'+pct.toFixed(1)+'%"></div></div>'
+      + '<div class="subs-country-count">'+e[1]+'</div>'
+      + '</div>';
+  }).join('');
+}
+
 
 /* ============================================
    BLUESKY SEARCH (shared helper)
