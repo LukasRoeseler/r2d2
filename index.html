@@ -371,9 +371,16 @@ a.author-link:hover .orcid-icon { transform: scale(1.15); }
 .s-hist-bar:hover { opacity: 0.7; }
 .s-hist-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); }
 /* world map */
-#s-worldmap svg { width: 100%; height: auto; display: block; }
-#s-worldmap .wm-country { stroke: var(--bg); stroke-width: 0.3; cursor: default; }
-#s-worldmap .wm-country:hover { opacity: 0.75; }
+.wm-wrap { position: relative; width: 100%; overflow: hidden; border-radius: 6px; background: var(--bg-chip); cursor: grab; }
+.wm-wrap.wm-grabbing { cursor: grabbing; }
+.wm-svg { width: 100%; height: auto; display: block; touch-action: none; }
+.wm-country { stroke: var(--bg); stroke-width: 0.2; transition: fill 0.1s; }
+.wm-country[data-has="1"] { cursor: pointer; }
+.wm-country[data-has="1"]:hover { fill: #f59e0b !important; }
+.wm-tooltip { position: absolute; display: none; pointer-events: none; background: #1f2937; color: #fff; font-size: 11px; line-height: 1.35; padding: 5px 8px; border-radius: 5px; white-space: nowrap; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+.wm-zoom-controls { position: absolute; right: 6px; bottom: 6px; display: flex; flex-direction: column; gap: 3px; }
+.wm-zoom-btn { width: 22px; height: 22px; border: 1px solid var(--border); background: var(--bg); color: var(--text-secondary); border-radius: 4px; font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+.wm-zoom-btn:hover { background: var(--bg-chip); color: var(--text); }
 .subs-block { margin-bottom: 34px; }
 .subs-country-row { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
 .subs-country-name { flex: 0 0 180px; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -422,6 +429,8 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
 .subs-badge-status.is-declined { background: #fde8e8; color: #b91c1c; border: 1px solid #f5b5b5; }
 .subs-badge-status.is-scheduled { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
 .subs-badge-status.is-progress { background: var(--r2-blue-light); color: var(--r2-blue-deep); border: 1px solid var(--r2-blue-border); }
+.subs-badge-status.is-withdrawn { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+.subs-flag { font-size: 16px; line-height: 1; cursor: default; margin-left: 2px; vertical-align: middle; }
 
 /* per-submission event timeline */
 .subs-events { margin-top: 11px; padding-left: 6px; border-left: 2px solid var(--border); display: flex; flex-direction: column; gap: 0; }
@@ -531,6 +540,14 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
       <div class="stat-row"><span class="stat-label">Abstract views</span><span class="stat-value" id="sum-views">—</span></div>
       <div class="stat-row"><span class="stat-label">PDF downloads</span><span class="stat-value" id="sum-pdfs">—</span></div>
       <div class="stat-row"><span class="stat-label">Open Access</span><span class="stat-value" id="sum-oa">—</span></div>
+      <div class="zenodo-summary-spark" id="ojs-usage-spark-wrap" style="display:none">
+        <div class="sparkline-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:4px">Usage by month</div>
+        <div id="ojs-usage-spark"></div>
+      </div>
+      <div class="zenodo-summary-spark" id="ojs-pubs-spark-wrap" style="display:none">
+        <div class="sparkline-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:4px">Articles published by month</div>
+        <div id="ojs-pubs-spark"></div>
+      </div>
     </div>
 
     <div id="sidebar-zenodo-stats" style="display:none">
@@ -557,6 +574,7 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
           <div class="ssb-row"><span class="ssb-dot" style="background:#7c3aed"></span><span class="ssb-name">Accepted</span><span class="ssb-val" id="s-sum-accepted">—</span></div>
           <div class="ssb-row"><span class="ssb-dot" style="background:#1e8bc3"></span><span class="ssb-name">Under review</span><span class="ssb-val" id="s-sum-review">—</span></div>
           <div class="ssb-row"><span class="ssb-dot" style="background:#dc2626"></span><span class="ssb-name">Declined</span><span class="ssb-val" id="s-sum-declined">—</span></div>
+          <div class="ssb-row" id="s-sum-withdrawn-row" style="display:none"><span class="ssb-dot" style="background:#9ca3af"></span><span class="ssb-name">Withdrawn</span><span class="ssb-val" id="s-sum-withdrawn">—</span></div>
         </div>
         <div class="ssb-bar" id="s-sum-bar"></div>
       </div>
@@ -564,6 +582,11 @@ a.subs-tl-title:hover { color: var(--r2-blue); }
       <div class="ssb-block">
         <div class="ssb-stat-row"><span class="ssb-stat-label">Median days to publication</span><span class="ssb-stat-value" id="s-sum-meddays">—</span></div>
         <div class="ssb-stat-row"><span class="ssb-stat-label">Countries</span><span class="ssb-stat-value" id="s-sum-countries">—</span></div>
+      </div>
+      <!-- Cumulative submissions over time -->
+      <div class="ssb-block" id="s-cumulative-block" style="display:none">
+        <div class="ssb-section-title">Total submissions over time</div>
+        <div id="s-cumulative"></div>
       </div>
       <!-- Days-to-publication histogram -->
       <div class="ssb-block" id="s-hist-block" style="display:none">
@@ -1516,6 +1539,56 @@ function updateSummary(){
   else   document.getElementById('sum-pdfs').textContent = '—';
   if (ALL_PUBS.length) countUp(document.getElementById('sum-oa'), '100%', dur);
   else                 document.getElementById('sum-oa').textContent = '—';
+
+  // Aggregate monthly views & downloads across all publications.
+  var viewsByMonth = {}, pdfsByMonth = {};
+  ALL_PUBS.forEach(function(p){
+    if (p.ojsViewsByMonth) Object.keys(p.ojsViewsByMonth).forEach(function(m){
+      viewsByMonth[m] = (viewsByMonth[m]||0) + (p.ojsViewsByMonth[m]||0);
+    });
+    if (p.ojsPdfsByMonth) Object.keys(p.ojsPdfsByMonth).forEach(function(m){
+      pdfsByMonth[m] = (pdfsByMonth[m]||0) + (p.ojsPdfsByMonth[m]||0);
+    });
+  });
+  if (Object.keys(viewsByMonth).length || Object.keys(pdfsByMonth).length){
+    document.getElementById('ojs-usage-spark-wrap').style.display = '';
+    buildUsageChart(viewsByMonth, pdfsByMonth, 'ojs-usage-spark');
+  }
+
+  // Articles published per month (bar chart).
+  var pubsByMonth = {};
+  ALL_PUBS.forEach(function(p){
+    var dp = p.datePublished || '';
+    if (dp.length >= 7){ var m = dp.slice(0,7); pubsByMonth[m] = (pubsByMonth[m]||0)+1; }
+  });
+  if (Object.keys(pubsByMonth).length){
+    document.getElementById('ojs-pubs-spark-wrap').style.display = '';
+    document.getElementById('ojs-pubs-spark').innerHTML = buildMonthlyBars(pubsByMonth, '#2ecc71', 'article');
+  }
+}
+
+// Simple monthly bar chart for counts (gap-filled, hover tooltip via title).
+function buildMonthlyBars(byMonth, color, noun){
+  var months = Object.keys(byMonth).sort();
+  if (!months.length) return '';
+  function addMonth(ym, n){
+    var y=parseInt(ym.slice(0,4),10), m=parseInt(ym.slice(5,7),10)-1+n;
+    y += Math.floor(m/12); m=((m%12)+12)%12;
+    return y+'-'+String(m+1).padStart(2,'0');
+  }
+  var full=[months[0]], guard=0;
+  while (full[full.length-1] !== months[months.length-1] && guard++ < 240)
+    full.push(addMonth(full[full.length-1],1));
+  var vals = full.map(function(m){ return byMonth[m]||0; });
+  var maxV = Math.max.apply(null, vals) || 1;
+  var names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function lbl(m){ return names[parseInt(m.slice(5,7),10)]+" '"+m.slice(2,4); }
+  var bars = full.map(function(m,i){
+    var v=vals[i]; var h=Math.max(2, Math.round((v/maxV)*56));
+    return '<div class="s-hist-bar" style="height:'+h+'px;background:'+color+'" title="'+lbl(m)+': '+v+' '+noun+(v!==1?'s':'')+'"></div>';
+  }).join('');
+  return '<div class="s-hist-bars">'+bars+'</div>'
+    + '<div class="s-hist-labels"><span>'+lbl(full[0])+'</span><span>'+lbl(full[full.length-1])+'</span></div>';
 }
 
 function updateZenodoSummary(){
@@ -1626,6 +1699,7 @@ async function loadSubmissions(){
   var nAcc = totals.accepted  || 0;
   var nRev = totals.underReview || 0;
   var nDec = totals.declined  || 0;
+  var nWith = totals.withdrawn || 0;
   var nCountries = totals.countries || Object.keys(data.byCountry||{}).length;
 
   document.getElementById('s-sum-total').textContent     = fmtNum(n);
@@ -1634,13 +1708,17 @@ async function loadSubmissions(){
   document.getElementById('s-sum-review').textContent    = fmtNum(nRev);
   document.getElementById('s-sum-declined').textContent  = fmtNum(nDec);
   document.getElementById('s-sum-countries').textContent = fmtNum(nCountries);
+  if (nWith > 0) {
+    document.getElementById('s-sum-withdrawn-row').style.display = '';
+    document.getElementById('s-sum-withdrawn').textContent = fmtNum(nWith);
+  }
 
   // Stacked status bar
   var barEl = document.getElementById('s-sum-bar');
   if (n > 0) {
     var segs = [
       {n: nPub, c: '#15803d'}, {n: nAcc, c: '#7c3aed'},
-      {n: nRev, c: '#1e8bc3'}, {n: nDec, c: '#dc2626'}
+      {n: nRev, c: '#1e8bc3'}, {n: nDec, c: '#dc2626'}, {n: nWith, c: '#9ca3af'}
     ];
     barEl.innerHTML = segs.filter(function(s){ return s.n > 0; }).map(function(s){
       return '<div class="ssb-bar-seg" style="flex:'+s.n+';background:'+s.c+'"></div>';
@@ -1665,6 +1743,7 @@ async function loadSubmissions(){
   document.getElementById('s-sum-meddays').textContent = medDays === '—' ? '—' : medDays + ' days';
 
   renderSubsMonthChart();
+  renderSubsCumulative();
   renderSubsHistogram(daysArr);
   renderSubsSidebarMap();
   renderSubsCountries();
@@ -1719,6 +1798,49 @@ function renderSubsCountries(){
       + '<div class="subs-country-count">'+e[1]+'</div>'
       + '</div>';
   }).join('');
+}
+
+function renderSubsCumulative(){
+  var subs = (SUBS_DATA && SUBS_DATA.submissions) || [];
+  var block = document.getElementById('s-cumulative-block');
+  var el = document.getElementById('s-cumulative');
+  var byMonth = {};
+  subs.forEach(function(s){
+    var ds = s.dateSubmitted || '';
+    if (ds.length >= 7){ var m=ds.slice(0,7); byMonth[m]=(byMonth[m]||0)+1; }
+  });
+  var months = Object.keys(byMonth).sort();
+  if (!months.length){ block.style.display='none'; return; }
+  block.style.display='';
+  function addMonth(ym,n){ var y=parseInt(ym.slice(0,4),10),m=parseInt(ym.slice(5,7),10)-1+n; y+=Math.floor(m/12); m=((m%12)+12)%12; return y+'-'+String(m+1).padStart(2,'0'); }
+  var full=[months[0]], guard=0;
+  while (full[full.length-1]!==months[months.length-1] && guard++<240) full.push(addMonth(full[full.length-1],1));
+  var cum=0; var pts=full.map(function(m){ cum += (byMonth[m]||0); return {m:m, v:cum}; });
+  var maxV = pts[pts.length-1].v || 1;
+  var W=240,H=80,padL=22,padR=8,padT=6,padB=18;
+  var chartW=W-padL-padR, chartH=H-padT-padB, n=pts.length;
+  var xStep = n>1 ? chartW/(n-1) : 0;
+  var names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function lbl(m){ return names[parseInt(m.slice(5,7),10)]+" '"+m.slice(2,4); }
+  function xOf(i){ return padL+i*xStep; }
+  function yOf(v){ return padT+chartH-(v/maxV)*chartH; }
+  var line = pts.map(function(p,i){ return xOf(i).toFixed(1)+','+yOf(p.v).toFixed(1); }).join(' ');
+  var areaD = 'M'+padL+','+(padT+chartH)+' L'+pts.map(function(p,i){ return xOf(i).toFixed(1)+','+yOf(p.v).toFixed(1); }).join(' L')+' L'+(padL+(n-1)*xStep).toFixed(1)+','+(padT+chartH)+' Z';
+  var yGrid=[0,Math.round(maxV/2),maxV].filter(function(v,i,a){return a.indexOf(v)===i;});
+  var grid = yGrid.map(function(v){ var y=yOf(v).toFixed(1);
+    return '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="#e3e7eb" stroke-width="1"/>'
+      +'<text x="'+(padL-3)+'" y="'+y+'" text-anchor="end" dominant-baseline="middle" fill="#8990a0" font-size="9">'+v+'</text>';
+  }).join('');
+  var xLabels = pts.map(function(p,i){ var show=i===0||i===n-1||p.m.slice(5)==='01';
+    return show ? '<text x="'+xOf(i).toFixed(1)+'" y="'+(H-3)+'" text-anchor="middle" fill="#8990a0" font-size="9">'+lbl(p.m)+'</text>' : '';
+  }).join('');
+  el.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:auto">'
+    + '<defs><linearGradient id="cumgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e8bc3" stop-opacity="0.18"/><stop offset="100%" stop-color="#1e8bc3" stop-opacity="0"/></linearGradient></defs>'
+    + grid
+    + '<path d="'+areaD+'" fill="url(#cumgrad)"/>'
+    + '<polyline points="'+line+'" fill="none" stroke="#1e8bc3" stroke-width="1.8" stroke-linejoin="round"/>'
+    + xLabels
+    + '</svg>';
 }
 
 function renderSubsHistogram(daysArr){
@@ -1784,12 +1906,15 @@ async function renderSubsSidebarMap(){
     return 'rgb('+r+','+g+','+b+')';
   };
 
-  // Convert TopoJSON arcs to SVG paths using a simple Mercator projection
-  var W = 200, H = 110;
+  // Convert TopoJSON arcs to SVG paths using a Mercator projection,
+  // cropped to exclude most of Antarctica for a tighter, cleaner map.
+  var W = 360, H = 200;
   function project(lon, lat){
     var x = (lon + 180) / 360 * W;
-    var latR = lat * Math.PI / 180;
-    var y = H/2 - (Math.log(Math.tan(Math.PI/4 + latR/2)) / Math.PI) * H * 0.72;
+    var latR = Math.max(-1.4, Math.min(1.45, lat * Math.PI / 180));
+    var mercY = Math.log(Math.tan(Math.PI/4 + latR/2));
+    // Map mercator y-range roughly [-2.3, 2.3] into the height with padding.
+    var y = H/2 - (mercY / 2.5) * (H/2);
     return [x, y];
   }
   // Decode delta-encoded arc
@@ -1834,16 +1959,111 @@ async function renderSubsSidebarMap(){
     var iso2 = N2A[numId] || '';
     var n = counts[iso2] || 0;
     var fill = colorFor(iso2);
-    var tip = iso2 ? (countryName(iso2) + (n ? ': '+n+' submission'+(n!==1?'s':'') : '')) : '';
     var d = featurePath(geom);
     if (!d) return '';
+    var nm = iso2 ? countryName(iso2) : '';
     return '<path class="wm-country" d="'+d+'" fill="'+fill+'"'
-      + (tip ? ' title="'+escH(tip)+'"' : '')
-      + (n ? ' stroke="#fff" stroke-width="0.5"' : '')
+      + ' data-name="'+escH(nm)+'" data-count="'+n+'"'
+      + (n ? ' data-has="1" stroke="#fff" stroke-width="0.4"' : '')
       + '/>';
   }).join('');
 
-  el.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+paths+'</svg>';
+  var mapId = 'wm'+Math.random().toString(36).slice(2,7);
+  el.innerHTML =
+    '<div class="wm-wrap" id="'+mapId+'">'
+    + '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" class="wm-svg">'
+    +   '<g class="wm-zoomable">'+paths+'</g>'
+    + '</svg>'
+    + '<div class="wm-tooltip"></div>'
+    + '<div class="wm-zoom-controls">'
+    +   '<button type="button" class="wm-zoom-btn" data-z="in">+</button>'
+    +   '<button type="button" class="wm-zoom-btn" data-z="out">−</button>'
+    +   '<button type="button" class="wm-zoom-btn" data-z="reset">⟲</button>'
+    + '</div>'
+    + '</div>';
+
+  // Wire up pan/zoom + tooltip after the element is in the DOM.
+  setTimeout(function(){ initWorldMap(mapId, W, H); }, 0);
+}
+
+function initWorldMap(mapId, W, H){
+  var wrap = document.getElementById(mapId);
+  if (!wrap) return;
+  var svg = wrap.querySelector('.wm-svg');
+  var g   = wrap.querySelector('.wm-zoomable');
+  var tip = wrap.querySelector('.wm-tooltip');
+  var state = { scale: 1, tx: 0, ty: 0, dragging: false, sx: 0, sy: 0 };
+
+  function apply(){
+    g.setAttribute('transform', 'translate('+state.tx+','+state.ty+') scale('+state.scale+')');
+  }
+  function clampScale(s){ return Math.max(1, Math.min(8, s)); }
+
+  function zoomAt(cx, cy, factor){
+    var newScale = clampScale(state.scale * factor);
+    var k = newScale / state.scale;
+    // keep the point under the cursor fixed
+    state.tx = cx - k * (cx - state.tx);
+    state.ty = cy - k * (cy - state.ty);
+    state.scale = newScale;
+    if (state.scale === 1){ state.tx = 0; state.ty = 0; }
+    apply();
+  }
+
+  // SVG coordinate from a mouse event
+  function svgXY(e){
+    var rect = svg.getBoundingClientRect();
+    var x = (e.clientX - rect.left) / rect.width  * W;
+    var y = (e.clientY - rect.top)  / rect.height * H;
+    return [x, y];
+  }
+
+  svg.addEventListener('wheel', function(e){
+    e.preventDefault();
+    var p = svgXY(e);
+    zoomAt(p[0], p[1], e.deltaY < 0 ? 1.2 : 1/1.2);
+  }, { passive:false });
+
+  svg.addEventListener('mousedown', function(e){
+    state.dragging = true; state.sx = e.clientX; state.sy = e.clientY;
+    wrap.classList.add('wm-grabbing');
+  });
+  window.addEventListener('mousemove', function(e){
+    if (!state.dragging) return;
+    var rect = svg.getBoundingClientRect();
+    state.tx += (e.clientX - state.sx) / rect.width  * W;
+    state.ty += (e.clientY - state.sy) / rect.height * H;
+    state.sx = e.clientX; state.sy = e.clientY;
+    apply();
+  });
+  window.addEventListener('mouseup', function(){
+    state.dragging = false; wrap.classList.remove('wm-grabbing');
+  });
+
+  // Zoom buttons
+  wrap.querySelectorAll('.wm-zoom-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var z = btn.getAttribute('data-z');
+      if (z === 'in')  zoomAt(W/2, H/2, 1.4);
+      else if (z === 'out') zoomAt(W/2, H/2, 1/1.4);
+      else { state.scale = 1; state.tx = 0; state.ty = 0; apply(); }
+    });
+  });
+
+  // Hover tooltip
+  g.querySelectorAll('.wm-country').forEach(function(path){
+    path.addEventListener('mousemove', function(e){
+      var nm = path.getAttribute('data-name');
+      if (!nm) { tip.style.display='none'; return; }
+      var n = parseInt(path.getAttribute('data-count'),10) || 0;
+      tip.innerHTML = '<b>'+nm+'</b>' + (n ? '<br>'+n+' submission'+(n!==1?'s':'') : '<br>no submissions');
+      tip.style.display = 'block';
+      var wr = wrap.getBoundingClientRect();
+      tip.style.left = (e.clientX - wr.left + 10) + 'px';
+      tip.style.top  = (e.clientY - wr.top  + 10) + 'px';
+    });
+    path.addEventListener('mouseleave', function(){ tip.style.display='none'; });
+  });
 }
 
 function renderSubsMonthChart(){
@@ -1857,7 +2077,8 @@ function renderSubsMonthChart(){
     { key: 'Published',    color: '#15803d' },
     { key: 'Accepted',     color: '#7c3aed' },
     { key: 'Under review', color: '#1e8bc3' },
-    { key: 'Declined',     color: '#dc2626' }
+    { key: 'Declined',     color: '#dc2626' },
+    { key: 'Withdrawn',    color: '#9ca3af' }
   ];
 
   // Normalise a month value to a {status: count} object. Supports the old
@@ -1963,14 +2184,21 @@ function renderSubsTimeline(){
     if (st==='Published') stClass += ' is-published';
     else if (st==='Accepted') stClass += ' is-scheduled';
     else if (st==='Declined') stClass += ' is-declined';
+    else if (st==='Withdrawn') stClass += ' is-withdrawn';
     else stClass += ' is-progress';
     var badges = '<span class="'+stClass+'">'+escH(st)+'</span>';
 
-    // Country badge
-    if (s.country) {
-      badges += '<span class="subs-badge subs-badge-country" title="'+escH(countryName(s.country))+'">'
-        + escH(flagEmoji(s.country)) + ' ' + escH(countryName(s.country)) + '</span>';
-    }
+    // Country flags — one per distinct author country. Hover shows the name.
+    var clist = (s.countries && s.countries.length)
+      ? s.countries
+      : (s.country ? [s.country] : []);
+    var seenC = {};
+    clist.forEach(function(c){
+      if (!c || seenC[c]) return;
+      seenC[c] = 1;
+      badges += '<span class="subs-flag" title="'+escH(countryName(c))+'">'
+        + escH(flagEmoji(c)) + '</span>';
+    });
 
     // Publication/acceptance date line (replaces timeline dots)
     var dateLine = '';
@@ -2074,22 +2302,18 @@ async function loadZenodo(){
   renderZenodo();
   updateZenodoSummary();
 
-  // Build the views-by-publication-month sparkline from seed stats
+  // Build the views & downloads-by-publication-month chart from seed stats
   var communityViewsByMonth = {};
+  var communityDlByMonth = {};
   ALL_ZENODO.forEach(function(rec){
     if (!rec.datePublished) return;
     var m = rec.datePublished.slice(0,7);
     communityViewsByMonth[m] = (communityViewsByMonth[m]||0) + (rec.stats_views||0);
+    communityDlByMonth[m]    = (communityDlByMonth[m]||0)    + (rec.stats_downloads||0);
   });
-  var sparkData = Object.keys(communityViewsByMonth).sort().map(function(m){
-    return { period: m, value: communityViewsByMonth[m] };
-  });
-  if (sparkData.length > 0) {
-    var zViews = {};
-    sparkData.forEach(function(d){ zViews[d.period] = d.value; });
+  if (Object.keys(communityViewsByMonth).length > 0) {
     var zEl = document.getElementById('z-community-spark');
-    if (zEl) zEl.innerHTML = buildUsageChart(zViews, {}, 'z-community-spark');
-    else buildUsageChart(zViews, {}, 'z-community-spark');
+    buildUsageChart(communityViewsByMonth, communityDlByMonth, 'z-community-spark');
   }
 
   setLoaderStep('stats','done','z');
@@ -2257,6 +2481,7 @@ async function loadAll(){
       pub.ojsViews = sumObj(OJS_DATA[pub.ojsId].views);
       pub.ojsPdfs  = sumObj(OJS_DATA[pub.ojsId].pdfs);
       pub.ojsViewsByMonth = OJS_DATA[pub.ojsId].views;
+      pub.ojsPdfsByMonth  = OJS_DATA[pub.ojsId].pdfs;
     }
   });
 
