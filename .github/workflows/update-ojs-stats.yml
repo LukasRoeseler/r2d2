@@ -4,9 +4,10 @@ name: Update OJS statistics
 # and commits it so the dashboard (index.html) picks up the newest file.
 on:
   schedule:
-    # 03:17 UTC every Monday. (Off-the-hour to avoid GitHub's busy scheduling
-    # windows, which can delay or drop on-the-hour jobs.)
-    - cron: "17 3 * * 1"
+    # 06:08 UTC daily = 08:08 CEST (summer). Note: in winter (CET, UTC+1)
+    # this lands at 07:08 local. Off-the-hour to avoid GitHub's busy
+    # scheduling windows, which can delay or drop on-the-hour jobs.
+    - cron: "8 6 * * *"
   workflow_dispatch: {}   # lets you trigger it manually from the Actions tab
 
 permissions:
@@ -37,10 +38,13 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add statistics/statistics-*.csv publications.json submissions.json
+          git add statistics/statistics-*.csv publications.json submissions.json submission_countries.csv
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "chore: update statistics, publications, and submissions ($(date -u +%Y-%m-%d))"
+            git commit -m "chore: update statistics, publications, submissions, countries ($(date -u +%Y-%m-%d))"
+            # Pull any manual edits made since checkout, then push, so a
+            # country you edited on GitHub is never lost to a race.
+            git pull --rebase --autostash origin main || true
             git push
           fi
