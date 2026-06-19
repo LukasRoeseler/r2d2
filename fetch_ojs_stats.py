@@ -57,6 +57,43 @@ DATE_END = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
 # One-time flag so we only dump the first decision object once (debug).
 _DEC_DEBUG_DONE = False
 
+# Map common country names (lowercased) to ISO alpha-2 codes, so the CSV can
+# be edited with human-readable names ("Germany") and the dashboard still gets
+# a code for its map/list. Already-valid 2-letter codes pass through.
+_NAME_TO_ISO2 = {
+    "argentina": "AR", "australia": "AU", "austria": "AT", "belgium": "BE",
+    "brazil": "BR", "canada": "CA", "switzerland": "CH", "chile": "CL",
+    "china": "CN", "colombia": "CO", "czechia": "CZ", "czech republic": "CZ",
+    "germany": "DE", "denmark": "DK", "estonia": "EE", "egypt": "EG",
+    "spain": "ES", "finland": "FI", "france": "FR", "united kingdom": "GB",
+    "great britain": "GB", "uk": "GB", "greece": "GR", "hong kong": "HK",
+    "croatia": "HR", "hungary": "HU", "indonesia": "ID", "ireland": "IE",
+    "israel": "IL", "india": "IN", "iran": "IR", "italy": "IT", "japan": "JP",
+    "kenya": "KE", "south korea": "KR", "korea": "KR", "lithuania": "LT",
+    "luxembourg": "LU", "latvia": "LV", "mexico": "MX", "malaysia": "MY",
+    "nigeria": "NG", "netherlands": "NL", "the netherlands": "NL",
+    "norway": "NO", "new zealand": "NZ", "peru": "PE", "philippines": "PH",
+    "pakistan": "PK", "poland": "PL", "portugal": "PT", "romania": "RO",
+    "serbia": "RS", "russia": "RU", "sweden": "SE", "singapore": "SG",
+    "slovenia": "SI", "slovakia": "SK", "thailand": "TH", "turkey": "TR",
+    "türkiye": "TR", "taiwan": "TW", "ukraine": "UA", "united states": "US",
+    "united states of america": "US", "usa": "US", "us": "US",
+    "uruguay": "UY", "vietnam": "VN", "south africa": "ZA",
+}
+
+
+def to_iso2(value):
+    """Normalise a country value (name or code) to an ISO alpha-2 code.
+    Returns '' if it can't be resolved. Unknown 2-letter inputs pass through.
+    """
+    v = (value or "").strip()
+    if not v:
+        return ""
+    if len(v) == 2 and v.isalpha():
+        return v.upper()
+    return _NAME_TO_ISO2.get(v.lower(), "")
+
+
 API_KEY = os.environ.get("OJS_API_KEY", "").strip()
 if not API_KEY:
     print("ERROR: OJS_API_KEY environment variable is not set.", file=sys.stderr)
@@ -215,6 +252,7 @@ def first_locale_value(d):
 # user across multiple submissions.
 _USER_COUNTRY_CACHE = {}
 _USER_DEBUG_DONE = False
+_PART_DEBUG_DONE = False
 
 
 def get_user_country(user_id):
@@ -243,9 +281,10 @@ def get_user_country(user_id):
     return c
 
 
-def get_submitter_user_id(submission):
+def get_submitter_user_id(submission, sub_id=None):
     """Find the submitting user's ID from a submission object. Tries the
-    explicit submitter field first, then the author-role stage assignment.
+    explicit submitter field first, then the author-role stage assignment,
+    then the dedicated participants endpoint.
     """
     # Some OJS versions expose the submitter directly.
     for key in ("submitterId", "userId", "submitter"):
@@ -254,44 +293,47 @@ def get_submitter_user_id(submission):
             return v
         if isinstance(v, dict) and isinstance(v.get("id"), int):
             return v["id"]
-    # Otherwise, look at stageAssignments for the author (the submitter is
-    # assigned in the author role on the submission). userGroup role IDs:
-    # 65536 = author (ROLE_ID_AUTHOR).
-    assignments = submission.get("stageAssignments") or []
-    # Prefer an explicit author-role assignment.
-    for a in assignments:
-        ug = a.get("userGroup") or {}
-        role_id = ug.get("roleId") if isinstance(ug, dict) else None
-        uid = a.get("userId") or (a.get("user") or {}).get("id")
-        if role_id == 65536 and uid:
-            return uid
-    # Fall back to the first assignment with a user id.
-    for a in assignments:
-        uid = a.get("userId") or (a.get("user") or {}).get("id")
-        if uid:
-            return uid
+
+    # stageAssignments embedded on the submission object.
+    def scan_assignments(assignments):
+        for a in (assignments or []):
+            ug = a.get("userGroup") or {}
+            role_id = ug.get("roleId") if isinstance(ug, dict) else None
+            uid = a.get("userId") or (a.get("user") or {}).get("id")
+            if role_id == 65536 and uid:
+                return uid
+        for a in (assignments or []):
+            uid = a.get("userId") or (a.get("user") or {}).get("id")
+            if uid:
+                return uid
+        return None
+
+    uid = scan_assignments(submission.get("stageAssignments"))
+    if uid:
+        return uid
+
+    # Fall back to the dedicated participants endpoint, which lists everyone
+    # assigned to the submission (including the submitting author).
+    if sub_id is not None:
+        parts = api_get("/submissions/%s/participants" % sub_id)
+        global _PART_DEBUG_DONE
+        if parts and not _PART_DEBUG_DONE:
+            _PART_DEBUG_DONE = True
+            p0 = parts[0] if isinstance(parts, list) and parts else parts
+            if isinstance(p0, dict):
+                print("  [debug] participant[0] keys: %s" % sorted(p0.keys()),
+                      file=sys.stderr)
+                print("  [debug] participant[0] id=%r country=%r"
+                      % (p0.get("id"), p0.get("country")), file=sys.stderr)
+        if isinstance(parts, list):
+            # Each participant is a user object; prefer one whose stage
+            # assignment is author, else take the first with a country.
+            for p in parts:
+                if p.get("country"):
+                    return p.get("id")
+            if parts:
+                return parts[0].get("id")
     return None
-    """Return (title, doi) for a submission in a single API call."""
-    data = api_get("/submissions/%s" % sub_id)
-    if not data:
-        return "", ""
-    pubs = data.get("publications") or []
-    cur_id = data.get("currentPublicationId")
-    pub = next((p for p in pubs if p.get("id") == cur_id),
-               pubs[0] if pubs else None)
-    if not pub:
-        return "", ""
-    title = str(first_locale_value(pub.get("title") or "")).strip()
-    doi_obj = pub.get("doiObject") or {}
-    doi = (doi_obj.get("doi") if isinstance(doi_obj, dict) else None) \
-        or pub.get("pub-id::doi") or pub.get("doi") or ""
-    if not doi:
-        url = pub.get("urlPublished") or data.get("_href") or ""
-        m = re.search(r"10\.\d{4,}/\S+", url)
-        if m:
-            doi = m.group(0).rstrip(".,;)")
-    doi = re.sub(r"^https?://doi\.org/", "", str(doi), flags=re.I).strip()
-    return title, doi
 
 
 def monthly_timeline(sub_id, metric):
@@ -405,7 +447,7 @@ def get_submission_detail(sub_id):
     # ---- Submitter country -----------------------------------------------
     # The reliable country value lives on the submitting user's profile, not
     # on the publication's author records. Find the submitter and look it up.
-    submitter_id = get_submitter_user_id(data)
+    submitter_id = get_submitter_user_id(data, sub_id)
     country = get_user_country(submitter_id)
     # Fallback: if the submitter profile had no usable country, try the
     # first author's country field on the publication.
@@ -546,6 +588,91 @@ def fetch_all_submission_ids():
             break
         time.sleep(0.2)
     return ids
+
+
+COUNTRY_CSV = "submission_countries.csv"
+
+
+def merge_country_csv(details, path=COUNTRY_CSV):
+    """Maintain a human-editable CSV of submitting-author countries, keyed by
+    submission ID. Rules:
+      * Existing rows are preserved — the `country` you typed is NEVER
+        overwritten by an automated run.
+      * New submissions are appended with the API-detected country as a
+        starting value (often blank); you can correct it on GitHub.
+      * Title and submission date are refreshed (safe, non-manual fields).
+    Returns a dict {id(str): country} reflecting the merged file, so the
+    caller can feed your manual values back into submissions.json.
+    Columns: submission_id, date_submitted, title, country
+    """
+    existing = {}
+    order = []
+    if os.path.exists(path):
+        with open(path, newline="", encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            for row in reader:
+                sid = (row.get("submission_id") or "").strip()
+                if not sid:
+                    continue
+                existing[sid] = {
+                    "submission_id": sid,
+                    "date_submitted": (row.get("date_submitted") or "").strip(),
+                    "title": (row.get("title") or "").strip(),
+                    # The manually-maintained field — preserved verbatim.
+                    "country": (row.get("country") or "").strip(),
+                }
+                order.append(sid)
+
+    detail_by_id = {str(d["id"]): d for d in details}
+
+    # Update/append from current submissions.
+    for sid, d in detail_by_id.items():
+        if sid in existing:
+            # Preserve the manually-entered country. Refresh title/date only.
+            existing[sid]["title"] = d.get("title", existing[sid]["title"])
+            existing[sid]["date_submitted"] = (
+                d.get("dateSubmitted") or existing[sid]["date_submitted"])
+            # If the country cell is still empty and the API now has a guess,
+            # seed it (this does not overwrite anything you typed).
+            if not existing[sid]["country"] and d.get("country"):
+                existing[sid]["country"] = d["country"]
+        else:
+            existing[sid] = {
+                "submission_id": sid,
+                "date_submitted": d.get("dateSubmitted", ""),
+                "title": d.get("title", ""),
+                "country": d.get("country", ""),  # API guess or blank
+            }
+            order.append(sid)
+
+    # Sort by submission date (oldest first), then ID, for a stable file.
+    rows = [existing[s] for s in dict.fromkeys(order) if s in existing]
+    rows.sort(key=lambda r: (r["date_submitted"] or "", r["submission_id"]))
+
+    new_content_lines = []
+    import io
+    buf = io.StringIO()
+    writer = csv.DictWriter(
+        buf, fieldnames=["submission_id", "date_submitted", "title",
+                         "country"])
+    writer.writeheader()
+    for r in rows:
+        writer.writerow(r)
+    new_content = buf.getvalue()
+
+    old_content = ""
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            old_content = fh.read()
+    if new_content != old_content:
+        with open(path, "w", newline="", encoding="utf-8") as fh:
+            fh.write(new_content)
+        print("Wrote %s with %d rows." % (path, len(rows)))
+    else:
+        print("%s unchanged (%d rows)." % (path, len(rows)))
+
+    # Return merged country map (manual edits take priority).
+    return {r["submission_id"]: r["country"] for r in rows if r["country"]}
 
 
 def write_submissions_json(details, path="submissions.json"):
@@ -702,6 +829,14 @@ def main():
             detail_by_id[str(det["id"])] = det
         time.sleep(0.2)
     if submission_details:
+        # Maintain the human-editable country CSV and let manual entries
+        # take priority over API-detected countries in the dashboard.
+        country_map = merge_country_csv(submission_details)
+        for d in submission_details:
+            manual = country_map.get(str(d["id"]))
+            if manual:
+                code = to_iso2(manual)
+                d["country"] = code if code else d.get("country", "")
         write_submissions_json(submission_details)
 
     # ---- Per-article monthly usage CSV ---------------------------------
