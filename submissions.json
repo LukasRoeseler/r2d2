@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-23",
+  "generated": "2026-07-24",
   "submissions": [
     {
       "id": 9022,
@@ -93,7 +93,7 @@
     {
       "id": 9414,
       "title": "Reproduction and Replication of an Adversarial Stylometry Experiment",
-      "doi": "",
+      "doi": "10.17879/replicationresearch-2026-9414",
       "dateSubmitted": "2026-03-04",
       "status": "Under review",
       "isPublished": false,
