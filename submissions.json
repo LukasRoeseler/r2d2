@@ -1,6 +1,21 @@
 {
-  "generated": "2026-09-02",
+  "generated": "2026-09-03",
   "submissions": [
+    {
+      "id": 10291,
+      "title": "Mental Timing in Locomotion: Walking Across Real and Imagined Distances",
+      "doi": "",
+      "dateSubmitted": "",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "BE",
+      "countries": [
+        "BE"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": []
+    },
     {
       "id": 9022,
       "title": "A Community Model for Rigorous and Inclusive Scholarship",
@@ -362,14 +377,15 @@
     "NL": 1,
     "DE": 3,
     "AT": 1,
-    "CH": 1
+    "CH": 1,
+    "BE": 1
   },
   "totals": {
     "published": 3,
     "accepted": 0,
     "declined": 1,
-    "underReview": 8,
+    "underReview": 9,
     "withdrawn": 1,
-    "countries": 7
+    "countries": 8
   }
 }
