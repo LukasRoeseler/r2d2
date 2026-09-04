@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-03",
+  "generated": "2026-09-04",
   "submissions": [
     {
       "id": 10291,
@@ -303,9 +303,37 @@
           "kind": "submitted"
         }
       ]
+    },
+    {
+      "id": 10296,
+      "title": "No evidence for Nonconscious Goal Pursuit in Novel Environments: A Replication of Eitam et al.’s (2008) Experiment 2",
+      "doi": "",
+      "dateSubmitted": "2026-09-03",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "US",
+      "countries": [
+        "US"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": [
+        {
+          "date": "2026-09-03",
+          "label": "Submitted",
+          "kind": "submitted"
+        }
+      ]
     }
   ],
   "byMonth": {
+    "2026-09": {
+      "Published": 0,
+      "Accepted": 0,
+      "Under review": 1,
+      "Declined": 0,
+      "Withdrawn": 0
+    },
     "2026-07": {
       "Published": 0,
       "Accepted": 0,
@@ -371,8 +399,8 @@
     }
   },
   "byCountry": {
+    "US": 6,
     "GB": 1,
-    "US": 5,
     "PH": 1,
     "NL": 1,
     "DE": 3,
@@ -384,7 +412,7 @@
     "published": 3,
     "accepted": 0,
     "declined": 1,
-    "underReview": 9,
+    "underReview": 10,
     "withdrawn": 1,
     "countries": 8
   }
