@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-05",
+  "generated": "2026-10-06",
   "submissions": [
     {
       "id": 9022,
@@ -271,21 +271,26 @@
     {
       "id": 10085,
       "title": "Debunking decreases mistaken causal inferences: A direct replication of Irving et al. (2022)",
-      "doi": "",
+      "doi": "10.17879/replicationresearch-2026-10085",
       "dateSubmitted": "2026-07-24",
-      "status": "Under review",
-      "isPublished": false,
+      "status": "Published",
+      "isPublished": true,
       "country": "GB",
       "countries": [
         "GB"
       ],
-      "decision": "",
+      "decision": "Published",
       "decisionDate": "",
       "timeline": [
         {
           "date": "2026-07-24",
           "label": "Submitted",
           "kind": "submitted"
+        },
+        {
+          "date": "2026-10-06",
+          "label": "Published",
+          "kind": "published"
         }
       ]
     },
@@ -341,9 +346,9 @@
       "Withdrawn": 0
     },
     "2026-07": {
-      "Published": 0,
+      "Published": 1,
       "Accepted": 0,
-      "Under review": 1,
+      "Under review": 0,
       "Declined": 0,
       "Withdrawn": 0
     },
@@ -415,10 +420,10 @@
     "CH": 1
   },
   "totals": {
-    "published": 3,
+    "published": 4,
     "accepted": 0,
     "declined": 1,
-    "underReview": 10,
+    "underReview": 9,
     "withdrawn": 1,
     "countries": 8
   }
