@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-06",
+  "generated": "2026-10-07",
   "submissions": [
     {
       "id": 9022,
@@ -335,9 +335,37 @@
           "kind": "submitted"
         }
       ]
+    },
+    {
+      "id": 10400,
+      "title": "Partial computational replication and preprocessing sensitivity in AI assisted email composition",
+      "doi": "",
+      "dateSubmitted": "2026-10-07",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "CN",
+      "countries": [
+        "CN"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": [
+        {
+          "date": "2026-10-07",
+          "label": "Submitted",
+          "kind": "submitted"
+        }
+      ]
     }
   ],
   "byMonth": {
+    "2026-10": {
+      "Published": 0,
+      "Accepted": 0,
+      "Under review": 1,
+      "Declined": 0,
+      "Withdrawn": 0
+    },
     "2026-09": {
       "Published": 0,
       "Accepted": 0,
@@ -410,6 +438,7 @@
     }
   },
   "byCountry": {
+    "CN": 1,
     "BE": 1,
     "US": 6,
     "GB": 1,
@@ -423,8 +452,8 @@
     "published": 4,
     "accepted": 0,
     "declined": 1,
-    "underReview": 9,
+    "underReview": 10,
     "withdrawn": 1,
-    "countries": 8
+    "countries": 9
   }
 }
