@@ -1,6 +1,21 @@
 {
-  "generated": "2026-10-07",
+  "generated": "2026-10-08",
   "submissions": [
+    {
+      "id": 10406,
+      "title": "The Different Meanings of Response Variability: A Preregistered Replication and Extension",
+      "doi": "",
+      "dateSubmitted": "",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "DE",
+      "countries": [
+        "DE"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": []
+    },
     {
       "id": 9022,
       "title": "A Community Model for Rigorous and Inclusive Scholarship",
@@ -341,13 +356,13 @@
       "title": "Partial computational replication and preprocessing sensitivity in AI assisted email composition",
       "doi": "",
       "dateSubmitted": "2026-10-07",
-      "status": "Under review",
+      "status": "Declined",
       "isPublished": false,
       "country": "CN",
       "countries": [
         "CN"
       ],
-      "decision": "",
+      "decision": "Declined",
       "decisionDate": "",
       "timeline": [
         {
@@ -362,8 +377,8 @@
     "2026-10": {
       "Published": 0,
       "Accepted": 0,
-      "Under review": 1,
-      "Declined": 0,
+      "Under review": 0,
+      "Declined": 1,
       "Withdrawn": 0
     },
     "2026-09": {
@@ -444,14 +459,14 @@
     "GB": 1,
     "PH": 1,
     "NL": 1,
-    "DE": 3,
+    "DE": 4,
     "AT": 1,
     "CH": 1
   },
   "totals": {
     "published": 4,
     "accepted": 0,
-    "declined": 1,
+    "declined": 2,
     "underReview": 10,
     "withdrawn": 1,
     "countries": 9
