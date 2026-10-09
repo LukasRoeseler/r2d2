@@ -1,21 +1,6 @@
 {
-  "generated": "2026-10-08",
+  "generated": "2026-10-09",
   "submissions": [
-    {
-      "id": 10406,
-      "title": "The Different Meanings of Response Variability: A Preregistered Replication and Extension",
-      "doi": "",
-      "dateSubmitted": "",
-      "status": "Under review",
-      "isPublished": false,
-      "country": "DE",
-      "countries": [
-        "DE"
-      ],
-      "decision": "",
-      "decisionDate": "",
-      "timeline": []
-    },
     {
       "id": 9022,
       "title": "A Community Model for Rigorous and Inclusive Scholarship",
@@ -371,13 +356,34 @@
           "kind": "submitted"
         }
       ]
+    },
+    {
+      "id": 10406,
+      "title": "The Different Meanings of Response Variability: A Preregistered Replication and Extension",
+      "doi": "",
+      "dateSubmitted": "2026-10-08",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "DE",
+      "countries": [
+        "DE"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": [
+        {
+          "date": "2026-10-08",
+          "label": "Submitted",
+          "kind": "submitted"
+        }
+      ]
     }
   ],
   "byMonth": {
     "2026-10": {
       "Published": 0,
       "Accepted": 0,
-      "Under review": 0,
+      "Under review": 1,
       "Declined": 1,
       "Withdrawn": 0
     },
@@ -453,13 +459,13 @@
     }
   },
   "byCountry": {
+    "DE": 4,
     "CN": 1,
     "BE": 1,
     "US": 6,
     "GB": 1,
     "PH": 1,
     "NL": 1,
-    "DE": 4,
     "AT": 1,
     "CH": 1
   },
