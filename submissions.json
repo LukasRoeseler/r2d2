@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-11",
+  "generated": "2026-10-12",
   "submissions": [
     {
       "id": 9022,
@@ -377,14 +377,56 @@
           "kind": "submitted"
         }
       ]
+    },
+    {
+      "id": 10412,
+      "title": "How Robust Are Political Differences in Trust in Public Service Broadcasters? A Same-Data Reproduction and Threshold Analysis of BBC and NHK Surveys",
+      "doi": "",
+      "dateSubmitted": "2026-10-12",
+      "status": "Declined",
+      "isPublished": false,
+      "country": "VN",
+      "countries": [
+        "VN"
+      ],
+      "decision": "Declined",
+      "decisionDate": "",
+      "timeline": [
+        {
+          "date": "2026-10-12",
+          "label": "Submitted",
+          "kind": "submitted"
+        }
+      ]
+    },
+    {
+      "id": 10411,
+      "title": "A comment on ``''A Mother's Voice: Impacts of Spousal Communication Training on Child Health Investments''",
+      "doi": "",
+      "dateSubmitted": "2026-10-12",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "CA",
+      "countries": [
+        "CA"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": [
+        {
+          "date": "2026-10-12",
+          "label": "Submitted",
+          "kind": "submitted"
+        }
+      ]
     }
   ],
   "byMonth": {
     "2026-10": {
       "Published": 0,
       "Accepted": 0,
-      "Under review": 1,
-      "Declined": 1,
+      "Under review": 2,
+      "Declined": 2,
       "Withdrawn": 0
     },
     "2026-09": {
@@ -459,6 +501,8 @@
     }
   },
   "byCountry": {
+    "VN": 1,
+    "CA": 1,
     "DE": 4,
     "CN": 1,
     "BE": 1,
@@ -472,9 +516,9 @@
   "totals": {
     "published": 4,
     "accepted": 0,
-    "declined": 2,
-    "underReview": 10,
+    "declined": 3,
+    "underReview": 11,
     "withdrawn": 1,
-    "countries": 9
+    "countries": 11
   }
 }
