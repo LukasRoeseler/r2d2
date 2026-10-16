@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-15",
+  "generated": "2026-10-16",
   "submissions": [
     {
       "id": 9022,
@@ -320,13 +320,13 @@
       "title": "Mental Timing in Locomotion: Walking Across Real and Imagined Distances",
       "doi": "",
       "dateSubmitted": "2026-09-09",
-      "status": "Under review",
+      "status": "Declined",
       "isPublished": false,
       "country": "BE",
       "countries": [
         "BE"
       ],
-      "decision": "",
+      "decision": "Declined",
       "decisionDate": "",
       "timeline": [
         {
@@ -453,8 +453,8 @@
     "2026-09": {
       "Published": 0,
       "Accepted": 0,
-      "Under review": 2,
-      "Declined": 0,
+      "Under review": 1,
+      "Declined": 1,
       "Withdrawn": 0
     },
     "2026-07": {
@@ -537,8 +537,8 @@
   "totals": {
     "published": 4,
     "accepted": 0,
-    "declined": 3,
-    "underReview": 12,
+    "declined": 4,
+    "underReview": 11,
     "withdrawn": 1,
     "countries": 11
   }
