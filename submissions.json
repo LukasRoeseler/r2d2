@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-28",
+  "generated": "2026-10-29",
   "submissions": [
     {
       "id": 9022,
@@ -440,13 +440,34 @@
           "kind": "submitted"
         }
       ]
+    },
+    {
+      "id": 10441,
+      "title": "Visual search with many targets in mind: A successful replication of Drew, Boettcher, and Wolfe (2017)",
+      "doi": "",
+      "dateSubmitted": "2026-10-28",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "US",
+      "countries": [
+        "US"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": [
+        {
+          "date": "2026-10-28",
+          "label": "Submitted",
+          "kind": "submitted"
+        }
+      ]
     }
   ],
   "byMonth": {
     "2026-10": {
       "Published": 0,
       "Accepted": 0,
-      "Under review": 3,
+      "Under review": 4,
       "Declined": 2,
       "Withdrawn": 0
     },
@@ -522,7 +543,7 @@
     }
   },
   "byCountry": {
-    "US": 7,
+    "US": 8,
     "VN": 1,
     "CA": 1,
     "DE": 4,
@@ -538,7 +559,7 @@
     "published": 4,
     "accepted": 0,
     "declined": 4,
-    "underReview": 11,
+    "underReview": 12,
     "withdrawn": 1,
     "countries": 11
   }
