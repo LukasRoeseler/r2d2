@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-01",
+  "generated": "2026-11-02",
   "submissions": [
     {
       "id": 9022,
@@ -208,7 +208,7 @@
     {
       "id": 9615,
       "title": "Are Redundant Labels Helpful during Category Learning? Replication of Lupyan, Rakison, & McClelland (2007)",
-      "doi": "",
+      "doi": "10.17879/replicationresearch-2026-9615",
       "dateSubmitted": "2026-05-03",
       "status": "Under review",
       "isPublished": false,
@@ -461,9 +461,37 @@
           "kind": "submitted"
         }
       ]
+    },
+    {
+      "id": 10454,
+      "title": "Replication of Comparative Framing in the Workplace: Who Is Seen as Liable for Gender Inequality?",
+      "doi": "",
+      "dateSubmitted": "2026-11-01",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "DE",
+      "countries": [
+        "DE"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": [
+        {
+          "date": "2026-11-01",
+          "label": "Submitted",
+          "kind": "submitted"
+        }
+      ]
     }
   ],
   "byMonth": {
+    "2026-11": {
+      "Published": 0,
+      "Accepted": 0,
+      "Under review": 1,
+      "Declined": 0,
+      "Withdrawn": 0
+    },
     "2026-10": {
       "Published": 0,
       "Accepted": 0,
@@ -543,10 +571,10 @@
     }
   },
   "byCountry": {
+    "DE": 5,
     "US": 8,
     "VN": 1,
     "CA": 1,
-    "DE": 4,
     "CN": 1,
     "BE": 1,
     "GB": 1,
@@ -559,7 +587,7 @@
     "published": 4,
     "accepted": 0,
     "declined": 4,
-    "underReview": 12,
+    "underReview": 13,
     "withdrawn": 1,
     "countries": 11
   }
