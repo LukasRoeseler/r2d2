@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-12",
+  "generated": "2026-11-13",
   "submissions": [
     {
       "id": 9022,
@@ -482,13 +482,34 @@
           "kind": "submitted"
         }
       ]
+    },
+    {
+      "id": 11705,
+      "title": "No reliable evidence for conspiracy beliefs being associated with emotion granularity – A re-analysis of Wabnegger et al. (2024) in line with the preregistration",
+      "doi": "",
+      "dateSubmitted": "2026-11-12",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "AT",
+      "countries": [
+        "AT"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": [
+        {
+          "date": "2026-11-12",
+          "label": "Submitted",
+          "kind": "submitted"
+        }
+      ]
     }
   ],
   "byMonth": {
     "2026-11": {
       "Published": 0,
       "Accepted": 0,
-      "Under review": 1,
+      "Under review": 2,
       "Declined": 0,
       "Withdrawn": 0
     },
@@ -571,6 +592,7 @@
     }
   },
   "byCountry": {
+    "AT": 2,
     "DE": 5,
     "US": 8,
     "VN": 1,
@@ -580,14 +602,13 @@
     "GB": 1,
     "PH": 1,
     "NL": 1,
-    "AT": 1,
     "CH": 1
   },
   "totals": {
     "published": 4,
     "accepted": 0,
     "declined": 4,
-    "underReview": 13,
+    "underReview": 14,
     "withdrawn": 1,
     "countries": 11
   }
