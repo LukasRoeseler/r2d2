@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-13",
+  "generated": "2026-11-16",
   "submissions": [
     {
       "id": 9022,
@@ -503,13 +503,34 @@
           "kind": "submitted"
         }
       ]
+    },
+    {
+      "id": 11711,
+      "title": "AI background and advice uptake after low practice performance",
+      "doi": "",
+      "dateSubmitted": "2026-11-15",
+      "status": "Under review",
+      "isPublished": false,
+      "country": "SG",
+      "countries": [
+        "SG"
+      ],
+      "decision": "",
+      "decisionDate": "",
+      "timeline": [
+        {
+          "date": "2026-11-15",
+          "label": "Submitted",
+          "kind": "submitted"
+        }
+      ]
     }
   ],
   "byMonth": {
     "2026-11": {
       "Published": 0,
       "Accepted": 0,
-      "Under review": 2,
+      "Under review": 3,
       "Declined": 0,
       "Withdrawn": 0
     },
@@ -592,6 +613,7 @@
     }
   },
   "byCountry": {
+    "SG": 1,
     "AT": 2,
     "DE": 5,
     "US": 8,
@@ -608,8 +630,8 @@
     "published": 4,
     "accepted": 0,
     "declined": 4,
-    "underReview": 14,
+    "underReview": 15,
     "withdrawn": 1,
-    "countries": 11
+    "countries": 12
   }
 }
